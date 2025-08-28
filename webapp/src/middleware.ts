@@ -141,10 +141,11 @@ export async function middleware(request: NextRequest) {
 
       // Apply general rate limiting as fallback
       await limiter.check(response, 10, ip); // 10 requests per minute general limit
-    } catch (error: any) {
-      console.error('Rate limiting error:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Rate limiting error:', errorMessage);
       
-      if (error.message === 'Rate limit exceeded') {
+      if (errorMessage === 'Rate limit exceeded') {
         return new NextResponse(
           JSON.stringify({
             error: 'Rate limit exceeded',

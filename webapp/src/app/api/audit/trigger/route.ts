@@ -17,12 +17,12 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     const github = new (githubService.constructor as any)(body.githubToken);
 
     // Validate repository access using circuit breaker
-    let repoInfo: any;
+    let repoInfo: Record<string, unknown>;
     try {
       repoInfo = await gitHubCircuitBreaker.execute(() => 
         github.validateRepository(body.repoUrl, body.githubToken)
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.securityEvent('repository_access_denied', {
         repoUrl: body.repoUrl,
         error: error.message,
@@ -49,9 +49,9 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
 
     // Check project compatibility
     try {
-      const compatibility: any = await gitHubCircuitBreaker.execute(() =>
-        github.checkProjectCompatibility(body.repoUrl, body.githubToken)
-      );
+          const compatibility: Record<string, unknown> = await gitHubCircuitBreaker.execute(() =>
+      github.checkProjectCompatibility(body.repoUrl, body.githubToken)
+    );
       
       if (!compatibility.hasNextjs) {
         logger.warn('Invalid project type', {
@@ -77,7 +77,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     }
 
     // Create audit workflow in the repository
-    const workflowResult: any = await gitHubCircuitBreaker.execute(() =>
+    const workflowResult: Record<string, unknown> = await gitHubCircuitBreaker.execute(() =>
       github.createAuditWorkflow(body.repoUrl, body.githubToken)
     );
     
@@ -93,7 +93,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     };
 
     // Trigger the GitHub Actions workflow
-    const triggerResult: any = await gitHubCircuitBreaker.execute(() =>
+    const triggerResult: Record<string, unknown> = await gitHubCircuitBreaker.execute(() =>
       github.triggerWorkflow(
         body.repoUrl,
         'nextjs-mui-audit.yml',

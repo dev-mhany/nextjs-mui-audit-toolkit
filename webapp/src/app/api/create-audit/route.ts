@@ -123,17 +123,18 @@ async function triggerAuditViaApp(owner: string, repo: string, auditId: string, 
       prUrl: null, // Will be available later when PR is created
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('GitHub App audit trigger failed', {
       owner,
       repo,
       auditId,
-      error: error.message,
+      error: errorMessage,
     });
     
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     };
   }
 }
@@ -166,17 +167,18 @@ async function triggerAuditViaPAT(owner: string, repo: string, pat: string, audi
       prUrl: null,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('PAT audit trigger failed', {
       owner,
       repo,
       auditId,
-      error: error.message,
+      error: errorMessage,
     });
     
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     };
   }
 }

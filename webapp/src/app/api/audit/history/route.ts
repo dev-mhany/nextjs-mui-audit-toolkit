@@ -23,13 +23,14 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(audits);
 
-  } catch (error: any) {
-    console.error('Error fetching audit history:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error fetching audit history:', errorMessage);
     
     return NextResponse.json(
       { 
         error: 'Failed to fetch audit history',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },
       { status: 500 }
     );
@@ -59,13 +60,14 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Audit deleted successfully' });
 
-  } catch (error: any) {
-    console.error('Error deleting audit:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting audit:', errorMessage);
     
     return NextResponse.json(
       { 
         error: 'Failed to delete audit',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },
       { status: 500 }
     );

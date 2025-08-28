@@ -79,8 +79,8 @@ export interface GitHubInstallation {
   createdAt: string;
   updatedAt: string;
   repositories?: string[];
-  repositoriesAdded?: any[];
-  repositoriesRemoved?: any[];
+  repositoriesAdded?: Record<string, unknown>[];
+  repositoriesRemoved?: Record<string, unknown>[];
 }
 
 export interface GitHubRepository {

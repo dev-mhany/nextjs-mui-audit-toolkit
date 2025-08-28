@@ -81,9 +81,10 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
       });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Email test failed', {
-      error: error.message,
+      error: errorMessage,
     });
 
     return NextResponse.json(
@@ -123,9 +124,10 @@ export async function GET() {
       testEndpoint: 'POST to this endpoint with {"email": "test@example.com"} to send a test email',
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to check email service status', details: error.message },
+      { error: 'Failed to check email service status', details: errorMessage },
       { status: 500 }
     );
   }

@@ -72,15 +72,17 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
       auditId: validatedPayload.audit_id,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     endTimer();
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     logger.error('Webhook processing failed', {
-      error: error.message,
-      stack: error.stack,
+      error: errorMessage,
+      stack: errorStack,
     });
     
     return NextResponse.json(
-      { error: 'Webhook processing failed', details: error.message },
+      { error: 'Webhook processing failed', details: errorMessage },
       { status: 500 }
     );
   }
@@ -91,7 +93,7 @@ async function handleWorkflowRunEvent(payload: WebhookPayload) {
   
   try {
     // Update audit record based on workflow status
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status: mapWorkflowStatusToAuditStatus(status),
       workflowRunId: workflow_run_id?.toString(),
       updatedAt: new Date().toISOString(),
@@ -125,10 +127,11 @@ async function handleWorkflowRunEvent(payload: WebhookPayload) {
       workflowRunId: workflow_run_id,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Failed to update audit from webhook', {
       auditId: audit_id,
-      error: error.message,
+      error: errorMessage,
     });
     throw error;
   }
@@ -160,10 +163,11 @@ async function handleAuditCompletedEvent(payload: WebhookPayload) {
     // Trigger any post-completion actions (email notifications, etc.)
     await triggerPostCompletionActions(audit_id, updateData);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Failed to handle audit completion', {
       auditId: audit_id,
-      error: error.message,
+      error: errorMessage,
     });
     throw error;
   }
@@ -190,7 +194,7 @@ function mapWorkflowStatusToAuditStatus(workflowStatus: string): string {
   }
 }
 
-async function triggerPostCompletionActions(auditId: string, auditData: any) {
+async function triggerPostCompletionActions(auditId: string, auditData: Record<string, unknown>) {
   try {
     // Get audit record to check for email notifications
     const audit = await db.getAudit(auditId);
@@ -228,11 +232,12 @@ async function triggerPostCompletionActions(auditId: string, auditData: any) {
             error: emailResult.error,
           });
         }
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
+        const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
         logger.error('Email notification error', {
           auditId,
           email: audit.userEmail,
-          error: emailError.message,
+          error: errorMessage,
         });
       }
     } else if (audit?.userEmail && !emailService) {
@@ -254,10 +259,11 @@ async function triggerPostCompletionActions(auditId: string, auditData: any) {
       emailServiceConfigured: !!emailService,
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Post-completion actions failed', {
       auditId,
-      error: error.message,
+      error: errorMessage,
     });
     // Don't throw - these are non-critical actions
   }

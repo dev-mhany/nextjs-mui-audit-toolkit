@@ -165,7 +165,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
   }
 });
 
-async function handleInstallationEvent(payload: any) {
+async function handleInstallationEvent(payload: Record<string, unknown>) {
   const { action, installation } = payload;
   
   if (action === 'created') {
@@ -194,7 +194,7 @@ async function handleInstallationEvent(payload: any) {
   }
 }
 
-async function handleInstallationRepositoriesEvent(payload: any) {
+async function handleInstallationRepositoriesEvent(payload: Record<string, unknown>) {
   const { action, installation, repositories_added, repositories_removed } = payload;
   
   logger.info('Installation repositories changed', {
@@ -212,7 +212,7 @@ async function handleInstallationRepositoriesEvent(payload: any) {
   );
 }
 
-async function handlePullRequestEvent(payload: any) {
+async function handlePullRequestEvent(payload: Record<string, unknown>) {
   const { action, pull_request, repository } = payload;
   
   // Check if this is an audit PR
@@ -239,7 +239,7 @@ async function handlePullRequestEvent(payload: any) {
   }
 }
 
-async function handleCheckRunEvent(payload: any) {
+async function handleCheckRunEvent(payload: Record<string, unknown>) {
   const { action, check_run, repository } = payload;
   
   // Check if this is our audit check run
@@ -300,7 +300,7 @@ async function handleCheckRunEvent(payload: any) {
   }
 }
 
-function extractAuditIdFromPR(pullRequest: any): string | null {
+function extractAuditIdFromPR(pullRequest: Record<string, unknown>): string | null {
   const bodyMatch = pullRequest.body?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
   if (bodyMatch) return bodyMatch[1];
   
@@ -310,21 +310,21 @@ function extractAuditIdFromPR(pullRequest: any): string | null {
   return null;
 }
 
-function extractAuditIdFromCheckRun(checkRun: any): string | null {
+function extractAuditIdFromCheckRun(checkRun: Record<string, unknown>): string | null {
   const summaryMatch = checkRun.output?.summary?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
   if (summaryMatch) return summaryMatch[1];
   
   return null;
 }
 
-function extractGradeFromCheckRun(checkRun: any): string | null {
+function extractGradeFromCheckRun(checkRun: Record<string, unknown>): string | null {
   const summaryMatch = checkRun.output?.summary?.match(/Grade:\s*([A-F][+-]?)/i);
   if (summaryMatch) return summaryMatch[1];
   
   return null;
 }
 
-function extractScoreFromCheckRun(checkRun: any): number | null {
+function extractScoreFromCheckRun(checkRun: Record<string, unknown>): number | null {
   const scoreMatch = checkRun.output?.summary?.match(/Score:\s*(\d+)/i);
   if (scoreMatch) return parseInt(scoreMatch[1], 10);
   

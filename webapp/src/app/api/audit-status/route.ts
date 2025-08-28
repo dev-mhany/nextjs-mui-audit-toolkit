@@ -83,20 +83,21 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Failed to get audit status', {
       runId: request.url,
-      error: error.message,
+      error: errorMessage,
     });
     
     return NextResponse.json(
-      { error: 'Failed to get audit status', details: error.message },
+      { error: 'Failed to get audit status', details: errorMessage },
       { status: 500 }
     );
   }
 });
 
-async function getLiveAuditStatus(audit: any) {
+async function getLiveAuditStatus(audit: Record<string, unknown>) {
   try {
     const { owner, repo } = parseRepoUrl(audit.repoUrl);
     
@@ -153,10 +154,11 @@ async function getLiveAuditStatus(audit: any) {
       artifacts,
     };
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Failed to get live audit status', {
       auditId: audit.id,
-      error: error.message,
+      error: errorMessage,
     });
     return null;
   }
