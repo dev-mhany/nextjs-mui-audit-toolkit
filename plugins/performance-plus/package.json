@@ -1,0 +1,9 @@
+{
+  "name": "@audit-toolkit/performance-plus",
+  "version": "1.0.0",
+  "description": "Advanced performance optimization rules for Next.js + MUI",
+  "main": "index.js",
+  "keywords": ["performance", "optimization", "audit", "nextjs", "mui"],
+  "author": "Audit Toolkit Team",
+  "license": "MIT"
+}

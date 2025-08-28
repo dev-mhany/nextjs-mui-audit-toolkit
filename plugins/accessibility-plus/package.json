@@ -1,0 +1,9 @@
+{
+  "name": "@audit-toolkit/accessibility-plus",
+  "version": "1.0.0",
+  "description": "Enhanced accessibility rules for Next.js + MUI audit toolkit",
+  "main": "index.js",
+  "keywords": ["accessibility", "a11y", "audit", "nextjs", "mui"],
+  "author": "Audit Toolkit Team",
+  "license": "MIT"
+}

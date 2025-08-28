@@ -1,0 +1,96 @@
+{
+  "name": "nextjs-mui-audit-toolkit",
+  "version": "1.0.0",
+  "description": "Static analysis toolkit for Next.js + MUI projects to enforce best practices",
+  "main": "src/index.js",
+  "bin": {
+    "nextjs-mui-audit": "src/cli.js",
+    "audit-fix": "src/fix-cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "audit": "node src/cli.js audit",
+    "run": "node src/cli.js run",
+    "audit:manual": "node src/manual-check.js",
+    "audit:pwa": "node scripts/pwa-audit.mjs",
+    "fix": "node src/cli.js fix",
+    "fix:dry-run": "node src/cli.js fix --dry-run",
+    "init": "node src/cli.js init",
+    "rules": "node src/cli.js rules",
+    "doctor": "node src/cli.js doctor",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test tests/a11y.spec.ts",
+    "test:coverage": "playwright test tests/coverage.spec.ts",
+    "test:keyboard": "playwright test tests/keyboard-focus.spec.ts",
+    "test:watch": "jest --watch",
+    "test:all": "npm run test:unit && npm run test:e2e",
+    "check:contrast": "node scripts/contrast-check.mjs",
+    "lighthouse": "npx @lhci/cli autorun",
+    "lint": "eslint src/",
+    "format": "prettier --write src/",
+    "init-config": "node -e \"import('./src/config-manager.js').then(m => m.ConfigManager.generateDefaultConfig())\""
+  },
+  "keywords": [
+    "nextjs",
+    "mui",
+    "audit",
+    "best-practices",
+    "static-analysis"
+  ],
+  "author": "Audit Toolkit Team",
+  "license": "MIT",
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "chalk": "^5.3.0",
+    "commander": "^11.1.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-next": "^14.0.4",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-unused-imports": "^3.1.0",
+    "glob": "^10.3.10",
+    "prettier": "^3.2.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.8.0",
+    "@lhci/cli": "^0.12.0",
+    "@next/bundle-analyzer": "^15.5.2",
+    "@playwright/test": "^1.40.0",
+    "jest": "^29.7.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "extensionsToTreatAsEsm": [".js"],
+    "globals": {
+      "jest": {
+        "useESM": true
+      }
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {},
+    "testMatch": [
+      "**/tests/unit/**/*.test.js",
+      "**/tests/integration/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/index.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"]
+  }
+}
