@@ -200,6 +200,67 @@ npx nextjs-mui-audit run --path ./src
 npx nextjs-mui-audit run --output ./my-audit-results
 ```
 
+### 🏭 CI/CD Integration (New in v1.1.0)
+
+The toolkit now includes enhanced CI/CD integration with proper exit codes and machine-readable output:
+
+```bash
+# CI mode - machine-readable JSON output with exit codes
+npx nextjs-mui-audit run --ci --min-score 85
+
+# Static analysis only (safe for untrusted repositories)
+npx nextjs-mui-audit run --no-runtime --output ./audit
+
+# Quick smoke test for basic validation
+npx nextjs-mui-audit run --smoke --min-score 70
+
+# Combined CI flags for maximum safety
+npx nextjs-mui-audit run --ci --no-runtime --smoke
+```
+
+#### Exit Codes for CI/CD
+
+- **0**: Audit passed all checks
+- **1**: Score below minimum threshold
+- **2**: Critical issues found (in strict mode)
+- **3**: Internal error or execution failure
+
+#### CI Mode Output
+
+With `--ci` flag, the toolkit outputs machine-readable JSON to stdout:
+
+```json
+{
+  "grade": "B+",
+  "score": 87,
+  "criticalIssues": 0,
+  "totalIssues": 12,
+  "duration": 45230,
+  "passed": true,
+  "categories": {
+    "nextjs": { "score": 90, "weight": 20 },
+    "mui": { "score": 85, "weight": 20 },
+    "accessibility": { "score": 88, "weight": 15 }
+  },
+  "thresholds": {
+    "minScore": 85,
+    "failOnCritical": false
+  }
+}
+```
+
+### 🔒 Security-First Static Analysis
+
+For maximum security when auditing untrusted repositories:
+
+```bash
+# Static analysis only - no code execution
+npx nextjs-mui-audit run --no-runtime
+
+# Combined with CI mode for automated pipelines
+npx nextjs-mui-audit run --ci --no-runtime --min-score 80
+```
+
 ### 📋 Individual Commands (Advanced Usage)
 
 If you need more control, you can run individual commands:
@@ -1200,6 +1261,24 @@ This runs **ALL** tests in one command:
 | `npm run test:coverage` | Just coverage analysis              | Individual results    |
 
 **The main `npm run audit` command now provides comprehensive coverage from static analysis through runtime testing in a single execution.**
+
+## 📚 Documentation
+
+For comprehensive documentation, see the `/docs` directory:
+
+- **[CLI Reference](./docs/CLI_REFERENCE.md)** - Complete command-line reference and options
+- **[Configuration Guide](./docs/CONFIGURATION_GUIDE.md)** - Detailed configuration options and examples
+- **[Plugin Development](./docs/PLUGIN_DEVELOPMENT.md)** - Guide to creating custom plugins
+
+### Quick Links
+
+- [Installation](#installation)
+- [Usage Examples](#usage)
+- [Configuration](./docs/CONFIGURATION_GUIDE.md#configuration-files)
+- [CLI Options](./docs/CLI_REFERENCE.md#options)
+- [Custom Rules](./docs/CONFIGURATION_GUIDE.md#custom-rules)
+- [Plugin System](./docs/CONFIGURATION_GUIDE.md#plugin-system)
+- [CI/CD Integration](./docs/CLI_REFERENCE.md#cicd-integration-options)
 
 ## 🤝 Contributing
 

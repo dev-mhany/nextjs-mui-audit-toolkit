@@ -1,0 +1,278 @@
+name: Deploy Web Application
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['webapp/**']
+  pull_request:
+    branches: [main]
+    paths: ['webapp/**']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
+
+env:
+  WEBAPP_DIR: ./webapp
+  NODE_VERSION: '18'
+
+jobs:
+  # Quality checks and testing
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WEBAPP_DIR }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WEBAPP_DIR }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Lint code
+        run: npm run lint
+
+      - name: 🔧 Type check
+        run: npm run type-check
+
+      - name: 🧪 Run tests
+        run: |
+          echo "Running webapp tests..."
+          node test-webapp.js
+
+      - name: 🏗️ Build application
+        run: npm run build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-build
+          path: ${{ env.WEBAPP_DIR }}/.next
+          retention-days: 1
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WEBAPP_DIR }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WEBAPP_DIR }}/package-lock.json
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run security audit
+        run: npm audit --audit-level moderate
+
+      - name: 🛡️ Check for vulnerabilities
+        run: |
+          echo "Checking for security vulnerabilities..."
+          npx audit-ci --config ./audit-ci.json || true
+
+  # Deploy to Vercel
+  deploy:
+    name: Deploy to Vercel
+    needs: [quality-checks, security-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📤 Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp-build
+          path: ${{ env.WEBAPP_DIR }}/.next
+
+      - name: 🚀 Deploy to Vercel (Preview)
+        if: github.ref != 'refs/heads/main' || github.event.inputs.environment == 'preview'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ${{ env.WEBAPP_DIR }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: 🚀 Deploy to Vercel (Production)
+        if: github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production'
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ${{ env.WEBAPP_DIR }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: 📝 Comment deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = process.env.VERCEL_URL || 'Deployment in progress...';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🚀 Deployment Preview
+              
+              Your webapp has been deployed for preview:
+              
+              **🔗 Preview URL**: ${deploymentUrl}
+              
+              **📊 Deployment Details**:
+              - **Commit**: ${context.sha.substring(0, 7)}
+              - **Branch**: ${context.ref}
+              - **Environment**: Preview
+              
+              **🧪 Test the deployed application**:
+              1. Visit the preview URL
+              2. Test the audit form with a repository
+              3. Verify GitHub Actions integration
+              4. Check the dashboard and analytics
+              
+              ---
+              *Automated deployment by Next.js + MUI Audit Toolkit*`
+            });
+
+  # Performance testing on deployed app
+  performance-test:
+    name: Performance Testing
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 📦 Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: 🔍 Run Lighthouse CI
+        run: |
+          lhci autorun --config=./webapp/lighthouserc.json || true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: 📊 Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci
+          retention-days: 30
+
+  # Notify on deployment completion
+  notify:
+    name: Notify Deployment
+    needs: [deploy, performance-test]
+    runs-on: ubuntu-latest
+    if: always() && (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    
+    steps:
+      - name: 🔔 Notify deployment status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentStatus = '${{ needs.deploy.result }}';
+            const performanceStatus = '${{ needs.performance-test.result }}';
+            
+            const emoji = deploymentStatus === 'success' ? '✅' : '❌';
+            const status = deploymentStatus === 'success' ? 'SUCCESS' : 'FAILED';
+            
+            console.log(`${emoji} Deployment ${status}`);
+            console.log(`📊 Performance Test: ${performanceStatus}`);
+            
+            // Here you could add Slack/Discord/email notifications
+            // Example:
+            // await fetch(process.env.SLACK_WEBHOOK_URL, {
+            //   method: 'POST',
+            //   headers: { 'Content-Type': 'application/json' },
+            //   body: JSON.stringify({
+            //     text: `${emoji} Webapp deployment ${status}`,
+            //     blocks: [...]
+            //   })
+            // });
+
+  # Cleanup old deployments
+  cleanup:
+    name: Cleanup
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 🧹 Clean up artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Cleanup old artifacts to save storage
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+            
+            const oldArtifacts = artifacts.data.artifacts
+              .filter(artifact => {
+                const age = Date.now() - new Date(artifact.created_at).getTime();
+                return age > 7 * 24 * 60 * 60 * 1000; // 7 days
+              })
+              .slice(0, 10); // Only delete 10 at a time
+            
+            for (const artifact of oldArtifacts) {
+              try {
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+                console.log(`Deleted artifact: ${artifact.name}`);
+              } catch (error) {
+                console.log(`Failed to delete artifact ${artifact.name}: ${error.message}`);
+              }
+            }

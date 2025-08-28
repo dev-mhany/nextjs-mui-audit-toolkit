@@ -1,0 +1,68 @@
+name: Next.js+MUI Audit (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      target_repo:
+        description: 'Target repository (owner/repo)'
+        required: true
+        type: string
+      target_ref:
+        description: 'Target repository ref/branch'
+        required: false
+        type: string
+        default: 'main'
+      audit_config:
+        description: 'Audit configuration (JSON)'
+        required: false
+        type: string
+        default: '{}'
+      user_email:
+        description: 'User email for notifications'
+        required: false
+        type: string
+    secrets:
+      APP_ID:
+        description: 'GitHub App ID'
+        required: true
+      APP_PRIVATE_KEY:
+        description: 'GitHub App Private Key'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    name: Trigger audit on target repository
+    steps:
+      - name: Create GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          
+      - name: Trigger remote repository audit
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ steps.app.outputs.token }}
+          repository: ${{ inputs.target_repo }}
+          event-type: dev-mhany-audit
+          client-payload: |
+            {
+              "ref": "${{ inputs.target_ref }}",
+              "audit_config": ${{ inputs.audit_config }},
+              "user_email": "${{ inputs.user_email }}",
+              "triggered_by": "${{ github.repository }}",
+              "run_id": "${{ github.run_id }}"
+            }
+            
+      - name: Log dispatch success
+        run: |
+          echo "✅ Audit dispatch sent to ${{ inputs.target_repo }}"
+          echo "📋 Config: ${{ inputs.audit_config }}"
+          echo "📧 Email: ${{ inputs.user_email }}"

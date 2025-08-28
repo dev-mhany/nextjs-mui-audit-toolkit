@@ -30,6 +30,9 @@ program
   .option('--no-cache', 'Disable caching', false)
   .option('--clear-cache', 'Clear cache before running', false)
   .option('--cache-info', 'Show cache information and exit', false)
+  .option('--ci', 'CI mode: machine-readable output and exit codes', false)
+  .option('--no-runtime', 'Skip runtime audits (static analysis only)', false)
+  .option('--smoke', 'Run smoke test preset (fast basic checks)', false)
   .parse()
 
 const options = program.opts()
@@ -64,7 +67,11 @@ async function main() {
     setupGlobalErrorHandling(logger)
 
     // Configure logger based on options
-    if (options.verbose) {
+    if (options.ci) {
+      // CI mode: minimal output, machine-readable
+      logger.setLevel('error')
+      logger.setFormat('json')
+    } else if (options.verbose) {
       logger.setLevel('debug')
     }
 
@@ -96,10 +103,30 @@ async function main() {
     }
     if (options.verbose) {
       config.output.verbose = true
+    }
+    if (options.ci) {
+      config.output.ci = true
+      config.output.verbose = false
+    }
+    if (options.smoke) {
+      // Smoke test preset: fast basic checks only
+      config.presets = { smoke: true }
+      config.thresholds.minScore = Math.min(config.thresholds.minScore, 70)
+      logger.info('Smoke test mode: running fast basic checks only')
+    }
+    if (options.noRuntime) {
+      config.runtime = { enabled: false }
+      logger.info('Runtime audits disabled (static analysis only)')
+    }
+    
+    if (options.verbose && !options.ci) {
       logger.debug('CLI options applied', {
         minScore: config.thresholds.minScore,
         strict: config.thresholds.failOnCritical,
-        output: config.output.directory
+        output: config.output.directory,
+        ci: options.ci,
+        noRuntime: options.noRuntime,
+        smoke: options.smoke
       })
     }
 
@@ -140,15 +167,22 @@ async function main() {
     const pwaDuration = logger.timeEnd('pwa')
     pwaProgress.succeed(`PWA audit completed (${pwaDuration}ms)`)
 
-    // Run runtime audits
-    const runtimeProgress = logger.startProgress('Running runtime audits')
-    logger.timeStart('runtime')
-    const runtimeResults = await withErrorHandling(() => runRuntimeAudits(options.path), logger, {
-      component: 'runtime',
-      path: options.path
-    })()
-    const runtimeDuration = logger.timeEnd('runtime')
-    runtimeProgress.succeed(`Runtime audits completed (${runtimeDuration}ms)`)
+    // Run runtime audits (unless disabled)
+    let runtimeResults = { summary: { totalIssues: 0 }, issues: [] }
+    if (!options.noRuntime && !config.runtime?.enabled === false) {
+      const runtimeProgress = logger.startProgress('Running runtime audits')
+      logger.timeStart('runtime')
+      runtimeResults = await withErrorHandling(() => runRuntimeAudits(options.path), logger, {
+        component: 'runtime',
+        path: options.path
+      })()
+      const runtimeDuration = logger.timeEnd('runtime')
+      runtimeProgress.succeed(`Runtime audits completed (${runtimeDuration}ms)`)
+    } else {
+      if (!options.ci) {
+        logger.info('Runtime audits skipped (static analysis only)')
+      }
+    }
 
     // Merge results
     const allResults = {
@@ -322,11 +356,26 @@ async function main() {
 
     // Display summary
     const totalDuration = Date.now() - startTime
-    logger.auditComplete(grades.overallScore, grades.letterGrade, totalDuration)
-
-    const outputMsg =
-      config.output.directory === '.' ? 'root directory' : `${config.output.directory}/`
-    logger.success(`Reports saved to: ${outputMsg}`)
+    
+    // CI mode: output JSON summary to stdout
+    if (options.ci) {
+      const ciSummary = {
+        grade: grades.letterGrade,
+        score: grades.overallScore,
+        criticalIssues: grades.criticalIssues,
+        totalIssues: allResults.summary.totalIssues,
+        duration: totalDuration,
+        passed: grades.overallScore >= config.thresholds.minScore && 
+                (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
+        categories: grades.categories,
+        thresholds: config.thresholds
+      }
+      console.log(JSON.stringify(ciSummary))
+    } else {
+      logger.auditComplete(grades.overallScore, grades.letterGrade, totalDuration)
+      const outputMsg = config.output.directory === '.' ? 'root directory' : `${config.output.directory}/`
+      logger.success(`Reports saved to: ${outputMsg}`)
+    }
 
     // Check if score meets minimum requirement
     if (grades.overallScore < config.thresholds.minScore) {
@@ -335,8 +384,10 @@ async function main() {
         'SCORE_TOO_LOW',
         { score: grades.overallScore, threshold: config.thresholds.minScore }
       )
-      logger.error('Audit failed due to low score', error)
-      process.exit(1)
+      if (!options.ci) {
+        logger.error('Audit failed due to low score', error)
+      }
+      process.exit(1) // Exit code 1: score below minimum
     }
 
     // Check for critical issues if strict mode
@@ -346,25 +397,49 @@ async function main() {
         'CRITICAL_ISSUES_FOUND',
         { criticalIssues: grades.criticalIssues }
       )
-      logger.error('Audit failed due to critical issues', error)
-      process.exit(1)
+      if (!options.ci) {
+        logger.error('Audit failed due to critical issues', error)
+      }
+      process.exit(2) // Exit code 2: critical issues found
     }
 
-    logger.success('Audit passed all checks!')
+    if (!options.ci) {
+      logger.success('Audit passed all checks!')
+    }
+    process.exit(0) // Exit code 0: success
   } catch (error) {
     const totalDuration = Date.now() - startTime
-    logger.auditFailed(error, totalDuration)
-
-    // Provide helpful error messages
-    if (error.code) {
-      logger.error(`Error code: ${error.code}`)
+    
+    if (options.ci) {
+      // CI mode: output error as JSON
+      const errorSummary = {
+        grade: 'F',
+        score: 0,
+        criticalIssues: 0,
+        totalIssues: 0,
+        duration: totalDuration,
+        passed: false,
+        error: {
+          message: error.message,
+          code: error.code,
+          type: 'internal_error'
+        }
+      }
+      console.log(JSON.stringify(errorSummary))
+    } else {
+      logger.auditFailed(error, totalDuration)
+      
+      // Provide helpful error messages
+      if (error.code) {
+        logger.error(`Error code: ${error.code}`)
+      }
+      
+      if (error.details && Object.keys(error.details).length > 0) {
+        logger.debug('Error details', error.details)
+      }
     }
 
-    if (error.details && Object.keys(error.details).length > 0) {
-      logger.debug('Error details', error.details)
-    }
-
-    process.exit(1)
+    process.exit(3) // Exit code 3: internal error
   }
 }
 
