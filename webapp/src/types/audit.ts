@@ -15,6 +15,9 @@ export interface CreateAuditRequest {
     createPR?: boolean;
     staticOnly?: boolean;
     autoMerge?: boolean;
+    fix?: boolean;
+    appPath?: string;
+    minScore?: number;
   };
 }
 
@@ -93,8 +96,10 @@ export interface AuditProgress {
   workflowId: string;
   step: string;
   percentage: number;
-  status: 'running' | 'completed' | 'failed';
+  status: 'running' | 'completed' | 'failed' | 'unknown';
   logs: string[];
+  audit?: AuditResult;
+  conclusion?: string;
 }
 
 export interface AuditSummary {

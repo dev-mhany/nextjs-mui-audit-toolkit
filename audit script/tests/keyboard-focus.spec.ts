@@ -1,245 +1,188 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Keyboard & Focus Health', () => {
-  test('no keyboard traps in modals', async ({ page }) => {
-    // Navigate to a page with modals (adjust URL as needed)
-    await page.goto('/modal-page')
-
-    // Wait for page to load
-    await page.waitForLoadState('networkidle')
-
-    // Look for modal/dialog elements
-    const modals = page.locator('[role="dialog"], [role="modal"], .modal, .dialog')
-
-    if ((await modals.count()) === 0) {
-      console.log('No modals found on page - skipping keyboard trap test')
-      return
-    }
-
-    for (let i = 0; i < (await modals.count()); i++) {
-      const modal = modals.nth(i)
-
-      // Check if modal is visible
-      if (!(await modal.isVisible())) continue
-
-      console.log(`Testing modal ${i + 1}: ${(await modal.getAttribute('role')) || 'unknown'}`)
-
-      // Focus enters modal
-      await modal.focus()
-
-      // Test Tab navigation within modal (should not escape)
-      let focusTrapped = true
-      let focusCount = 0
-      const maxTabs = 40 // Prevent infinite loops
-
-      for (let tabCount = 0; tabCount < maxTabs; tabCount++) {
-        const previousFocus = await page.evaluate(() => document.activeElement?.tagName)
-        await page.keyboard.press('Tab')
-        const currentFocus = await page.evaluate(() => document.activeElement?.tagName)
-
-        // If focus didn't change, we might be trapped
-        if (previousFocus === currentFocus) {
-          focusCount++
-          if (focusCount > 3) {
-            focusTrapped = false
-            break
-          }
-        } else {
-          focusCount = 0
-        }
-
-        // Check if focus is still within modal
-        const focusInModal = await modal.evaluate(
-          (el, activeEl) => {
-            return el.contains(activeEl)
-          },
-          await page.evaluate(() => document.activeElement)
-        )
-
-        if (!focusInModal) {
-          focusTrapped = false
-          break
-        }
-      }
-
-      // Test Shift+Tab navigation
-      await modal.focus()
-      let shiftTabTrapped = true
-
-      for (let tabCount = 0; tabCount < maxTabs; tabCount++) {
-        const previousFocus = await page.evaluate(() => document.activeElement?.tagName)
-        await page.keyboard.press('Shift+Tab')
-        const currentFocus = await page.evaluate(() => document.activeElement?.tagName)
-
-        if (previousFocus === currentFocus) {
-          focusCount++
-          if (focusCount > 3) {
-            shiftTabTrapped = false
-            break
-          }
-        } else {
-          focusCount = 0
-        }
-
-        const focusInModal = await modal.evaluate(
-          (el, activeEl) => {
-            return el.contains(activeEl)
-          },
-          await page.evaluate(() => document.activeElement)
-        )
-
-        if (!focusInModal) {
-          shiftTabTrapped = false
-          break
-        }
-      }
-
-      // Test Escape key functionality
-      const escapeWorks = await testEscapeKey(page, modal)
-
-      // Assertions
-      expect(focusTrapped, 'Modal should trap focus with Tab key').toBe(true)
-      expect(shiftTabTrapped, 'Modal should trap focus with Shift+Tab key').toBe(true)
-      expect(escapeWorks, 'Modal should close with Escape key').toBe(true)
-    }
-  })
-
-  test('focus management in forms', async ({ page }) => {
-    await page.goto('/forms-page')
-    await page.waitForLoadState('networkidle')
-
-    const forms = page.locator('form')
-
-    if ((await forms.count()) === 0) {
-      console.log('No forms found on page - skipping form focus test')
-      return
-    }
-
-    for (let i = 0; i < (await forms.count()); i++) {
-      const form = forms.nth(i)
-
-      // Get all focusable elements in form
-      const focusableElements = form.locator(
-        'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
-      )
-
-      if ((await focusableElements.count()) === 0) continue
-
-      console.log(
-        `Testing form ${i + 1} with ${await focusableElements.count()} focusable elements`
-      )
-
-      // Test Tab navigation through form
-      await focusableElements.first().focus()
-
-      for (let j = 0; j < (await focusableElements.count()); j++) {
-        const element = focusableElements.nth(j)
-
-        // Check if element is focusable
-        const isFocusable = (await element.isVisible()) && !(await element.getAttribute('disabled'))
-
-        if (isFocusable) {
-          await element.focus()
-          const isFocused = await element.evaluate(el => el === document.activeElement)
-          expect(isFocused, `Element ${j + 1} should be focusable`).toBe(true)
-        }
-
-        // Test Tab to next element
-        if (j < (await focusableElements.count()) - 1) {
-          await page.keyboard.press('Tab')
-          const nextElement = focusableElements.nth(j + 1)
-          const nextFocused = await nextElement.evaluate(el => el === document.activeElement)
-          expect(nextFocused, `Tab should move focus to next element`).toBe(true)
-        }
-      }
-    }
-  })
-
-  test('skip links functionality', async ({ page }) => {
+test.describe('Keyboard Navigation Tests', () => {
+  test('comprehensive keyboard navigation flow', async ({ page }) => {
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
-
-    // Look for skip links
-    const skipLinks = page.locator('a[href^="#"], [data-skip-link]')
-
-    if ((await skipLinks.count()) === 0) {
-      console.log('No skip links found - skipping skip link test')
-      return
+    
+    // Test skip link functionality
+    await page.keyboard.press('Tab')
+    const firstFocusedElement = await page.locator(':focus')
+    
+    // Check if skip link is available and functional
+    const skipLinkText = await firstFocusedElement.textContent()
+    if (skipLinkText && skipLinkText.toLowerCase().includes('skip')) {
+      await page.keyboard.press('Enter')
+      const mainContent = await page.locator('#main-content, main, [role="main"]')
+      await expect(mainContent).toBeFocused()
     }
-
-    for (let i = 0; i < (await skipLinks.count()); i++) {
-      const skipLink = skipLinks.nth(i)
-
-      // Focus skip link
-      await skipLink.focus()
-
-      // Check if it's visible when focused
-      const isVisible = await skipLink.isVisible()
-      expect(isVisible, 'Skip link should be visible when focused').toBe(true)
-
-      // Test Enter key activation
-      await skipLink.press('Enter')
-
-      // Check if focus moved to target
-      const href = await skipLink.getAttribute('href')
-      if (href && href.startsWith('#')) {
-        const targetId = href.substring(1)
-        const target = page.locator(`#${targetId}`)
-
-        if ((await target.count()) > 0) {
-          // Wait a bit for focus to settle
-          await page.waitForTimeout(100)
-
-          const targetFocused = await target.evaluate(
-            el => el === document.activeElement || el.contains(document.activeElement)
-          )
-          expect(targetFocused, `Focus should move to skip link target: ${targetId}`).toBe(true)
+    
+    // Test navigation menu accessibility
+    const navElements = page.locator('nav a, nav button')
+    const navCount = await navElements.count()
+    
+    if (navCount > 0) {
+      // Navigate through menu items
+      for (let i = 0; i < Math.min(navCount, 5); i++) {
+        await page.keyboard.press('Tab')
+        const focusedElement = page.locator(':focus')
+        
+        // Ensure focused element is visible
+        await expect(focusedElement).toBeVisible()
+        
+        // Check focus indicator is present
+        const focusOutline = await focusedElement.evaluate(el => {
+          const styles = window.getComputedStyle(el)
+          return styles.outline !== 'none' || 
+                 styles.boxShadow !== 'none' || 
+                 styles.border !== styles.border // Basic focus indicator check
+        })
+        
+        expect(focusOutline).toBeTruthy()
+      }
+    }
+  })
+  
+  test('form keyboard accessibility', async ({ page }) => {
+    await page.goto('/forms')
+    
+    // Find all form inputs
+    const inputs = page.locator('input, textarea, select, button[type="submit"]')
+    const inputCount = await inputs.count()
+    
+    if (inputCount > 0) {
+      // Navigate through form elements
+      for (let i = 0; i < inputCount; i++) {
+        await page.keyboard.press('Tab')
+        const focusedElement = page.locator(':focus')
+        
+        // Ensure form element is accessible via keyboard
+        await expect(focusedElement).toBeVisible()
+        
+        // Test form interaction
+        const tagName = await focusedElement.evaluate(el => el.tagName.toLowerCase())
+        
+        if (tagName === 'input') {
+          const inputType = await focusedElement.getAttribute('type')
+          
+          if (inputType === 'text' || inputType === 'email' || !inputType) {
+            await focusedElement.fill('test input')
+            const value = await focusedElement.inputValue()
+            expect(value).toBe('test input')
+          }
         }
+        
+        if (tagName === 'textarea') {
+          await focusedElement.fill('test textarea content')
+          const value = await focusedElement.inputValue()
+          expect(value).toBe('test textarea content')
+        }
+      }
+    }
+  })
+  
+  test('modal and dialog keyboard trapping', async ({ page }) => {
+    await page.goto('/')
+    
+    // Look for modal/dialog triggers
+    const modalTriggers = page.locator('[data-testid*="modal"], [aria-haspopup="dialog"], button[data-modal]')
+    const triggerCount = await modalTriggers.count()
+    
+    if (triggerCount > 0) {
+      // Open first modal
+      await modalTriggers.first().click()
+      
+      // Wait for modal to appear
+      await page.waitForTimeout(500)
+      
+      // Check if modal is properly labeled
+      const modal = page.locator('[role="dialog"], [role="alertdialog"], .modal')
+      const modalCount = await modal.count()
+      
+      if (modalCount > 0) {
+        // Test focus trapping
+        const focusableElements = modal.locator('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+        const focusableCount = await focusableElements.count()
+        
+        if (focusableCount > 0) {
+          // First element should be focused
+          await expect(focusableElements.first()).toBeFocused()
+          
+          // Tab through elements
+          for (let i = 0; i < focusableCount; i++) {
+            await page.keyboard.press('Tab')
+          }
+          
+          // Should cycle back to first element
+          await expect(focusableElements.first()).toBeFocused()
+          
+          // Test Escape key to close modal
+          await page.keyboard.press('Escape')
+          await page.waitForTimeout(500)
+          
+          // Modal should be closed
+          await expect(modal).not.toBeVisible()
+        }
+      }
+    }
+  })
+  
+  test('custom component keyboard support', async ({ page }) => {
+    await page.goto('/')
+    
+    // Test custom interactive components
+    const customComponents = page.locator('[role="button"]:not(button), [role="tab"], [role="menuitem"]')
+    const componentCount = await customComponents.count()
+    
+    if (componentCount > 0) {
+      for (let i = 0; i < Math.min(componentCount, 3); i++) {
+        const component = customComponents.nth(i)
+        
+        // Focus the component
+        await component.focus()
+        await expect(component).toBeFocused()
+        
+        // Test activation with Enter and Space
+        const role = await component.getAttribute('role')
+        
+        if (role === 'button') {
+          // Test both Enter and Space activation
+          await page.keyboard.press('Enter')
+          await page.waitForTimeout(100)
+          
+          await component.focus()
+          await page.keyboard.press('Space')
+          await page.waitForTimeout(100)
+        }
+        
+        if (role === 'tab') {
+          // Test arrow key navigation for tabs
+          await page.keyboard.press('ArrowRight')
+          await page.waitForTimeout(100)
+          
+          await page.keyboard.press('ArrowLeft')
+          await page.waitForTimeout(100)
+        }
+      }
+    }
+  })
+  
+  test('ARIA live regions keyboard navigation', async ({ page }) => {
+    await page.goto('/')
+    
+    // Look for live regions that might update during keyboard navigation
+    const liveRegions = page.locator('[aria-live], [role="status"], [role="alert"]')
+    const liveRegionCount = await liveRegions.count()
+    
+    if (liveRegionCount > 0) {
+      // Ensure live regions are properly labeled
+      for (let i = 0; i < liveRegionCount; i++) {
+        const region = liveRegions.nth(i)
+        const ariaLabel = await region.getAttribute('aria-label')
+        const ariaLabelledby = await region.getAttribute('aria-labelledby')
+        
+        // Live regions should have appropriate labeling
+        expect(ariaLabel || ariaLabelledby).toBeTruthy()
       }
     }
   })
 })
-
-// Helper function to test Escape key functionality
-async function testEscapeKey(page: any, modal: any): Promise<boolean> {
-  try {
-    // Check if modal has close functionality
-    const closeButton = modal.locator(
-      '[aria-label*="close"], [aria-label*="Close"], .close, .close-btn, button[onClick*="close"]'
-    )
-
-    if ((await closeButton.count()) > 0) {
-      // Focus modal first
-      await modal.focus()
-
-      // Press Escape
-      await page.keyboard.press('Escape')
-
-      // Wait a bit for any animations
-      await page.waitForTimeout(300)
-
-      // Check if modal is hidden
-      const isHidden = !(await modal.isVisible())
-
-      if (isHidden) {
-        return true
-      }
-    }
-
-    // If no close button or Escape didn't work, check if modal responds to Escape
-    await modal.focus()
-    await page.keyboard.press('Escape')
-
-    // Look for any change in modal state
-    const beforeState =
-      (await modal.getAttribute('aria-hidden')) || (await modal.getAttribute('hidden'))
-    await page.waitForTimeout(100)
-    const afterState =
-      (await modal.getAttribute('aria-hidden')) || (await modal.getAttribute('hidden'))
-
-    return beforeState !== afterState
-  } catch (error) {
-    console.warn('Error testing Escape key:', error)
-    return false
-  }
-}

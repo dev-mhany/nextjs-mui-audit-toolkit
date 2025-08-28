@@ -80,8 +80,9 @@ async function main() {
 
     // Load configuration
     const configProgress = logger.startProgress('Loading configuration')
+    let config
     try {
-      const config = await configManager.loadConfig(options.config)
+      config = await configManager.loadConfig(options.config)
       configManager.validate()
 
       const ruleCount = Object.keys(config.rules || {}).length
@@ -118,7 +119,7 @@ async function main() {
       config.runtime = { enabled: false }
       logger.info('Runtime audits disabled (static analysis only)')
     }
-    
+
     if (options.verbose && !options.ci) {
       logger.debug('CLI options applied', {
         minScore: config.thresholds.minScore,
@@ -356,7 +357,7 @@ async function main() {
 
     // Display summary
     const totalDuration = Date.now() - startTime
-    
+
     // CI mode: output JSON summary to stdout
     if (options.ci) {
       const ciSummary = {
@@ -365,15 +366,17 @@ async function main() {
         criticalIssues: grades.criticalIssues,
         totalIssues: allResults.summary.totalIssues,
         duration: totalDuration,
-        passed: grades.overallScore >= config.thresholds.minScore && 
-                (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
+        passed:
+          grades.overallScore >= config.thresholds.minScore &&
+          (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
         categories: grades.categories,
         thresholds: config.thresholds
       }
       console.log(JSON.stringify(ciSummary))
     } else {
       logger.auditComplete(grades.overallScore, grades.letterGrade, totalDuration)
-      const outputMsg = config.output.directory === '.' ? 'root directory' : `${config.output.directory}/`
+      const outputMsg =
+        config.output.directory === '.' ? 'root directory' : `${config.output.directory}/`
       logger.success(`Reports saved to: ${outputMsg}`)
     }
 
@@ -409,7 +412,7 @@ async function main() {
     process.exit(0) // Exit code 0: success
   } catch (error) {
     const totalDuration = Date.now() - startTime
-    
+
     if (options.ci) {
       // CI mode: output error as JSON
       const errorSummary = {
@@ -428,12 +431,12 @@ async function main() {
       console.log(JSON.stringify(errorSummary))
     } else {
       logger.auditFailed(error, totalDuration)
-      
+
       // Provide helpful error messages
       if (error.code) {
         logger.error(`Error code: ${error.code}`)
       }
-      
+
       if (error.details && Object.keys(error.details).length > 0) {
         logger.debug('Error details', error.details)
       }

@@ -258,7 +258,7 @@ export function AuditHistory() {
                     </Typography>
                     
                     {audit.status === 'running' && (
-                      <LinearProgress size="small" sx={{ height: 3, borderRadius: 1 }} />
+                      <LinearProgress sx={{ height: 3, borderRadius: 1 }} />
                     )}
                     
                     {audit.error && (

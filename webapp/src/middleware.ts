@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { rateLimit } from '@/lib/rate-limit';
+import { db } from '@/lib/database';
 
 // Rate limiting configuration
 const limiter = rateLimit({
@@ -61,6 +62,38 @@ export async function middleware(request: NextRequest) {
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
+  }
+
+  // Check for session authentication on protected routes
+  if (pathname.startsWith('/api/create-audit') || pathname.startsWith('/api/audit/trigger')) {
+    const sessionToken = request.cookies.get('audit_session')?.value;
+    
+    if (sessionToken) {
+      try {
+        const session = await db.getSessionByToken(sessionToken);
+        if (!session) {
+          return new NextResponse(
+            JSON.stringify({
+              error: 'Invalid session',
+              message: 'Session expired or invalid. Please install the GitHub App again.',
+            }),
+            {
+              status: 401,
+              headers: {
+                'Content-Type': 'application/json',
+                ...Object.fromEntries(response.headers.entries()),
+              },
+            }
+          );
+        }
+        
+        // Add session info to request headers for API routes
+        response.headers.set('X-Session-Installation-Id', session.installationId?.toString() || '');
+        response.headers.set('X-Session-User-Id', session.userId || '');
+      } catch (error) {
+        console.error('Session validation error:', error);
+      }
+    }
   }
 
   // Apply rate limiting to API routes

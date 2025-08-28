@@ -34,14 +34,14 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
         // Update local status if changed
         if (liveStatus && liveStatus.state !== audit.status) {
           await db.updateAudit(audit.id, {
-            status: liveStatus.state,
+            status: liveStatus.state as 'pending' | 'running' | 'completed' | 'failed' | 'queued',
             grade: liveStatus.grade,
             prUrl: liveStatus.prUrl,
             artifacts: liveStatus.artifacts,
             updatedAt: new Date().toISOString(),
           });
           
-          audit.status = liveStatus.state;
+          audit.status = liveStatus.state as 'pending' | 'running' | 'completed' | 'failed' | 'queued';
           audit.grade = liveStatus.grade;
           audit.prUrl = liveStatus.prUrl;
           audit.artifacts = liveStatus.artifacts;
@@ -55,7 +55,17 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
       }
     }
 
-    const response = {
+    const response: {
+      state: string;
+      grade?: string;
+      prUrl?: string;
+      artifacts: Record<string, any>;
+      auditId: string;
+      repoUrl: string;
+      createdAt: string;
+      updatedAt?: string;
+      error?: string;
+    } = {
       state: mapAuditStatus(audit.status),
       grade: audit.grade,
       prUrl: audit.prUrl,
@@ -122,6 +132,11 @@ async function getLiveAuditStatus(audit: any) {
         // Extract grade from check runs or PR
         grade = await extractGradeFromRun(owner, repo, auditRun.id);
         
+        // If no grade from check runs, try to parse from the audit report
+        if (!grade) {
+          grade = await extractGradeFromReport(owner, repo, auditRun.id);
+        }
+        
       } else {
         state = 'failed';
       }
@@ -171,7 +186,7 @@ async function getAuditArtifacts(owner: string, repo: string, runId: string) {
   try {
     const artifacts = await githubService.getWorkflowArtifacts(owner, repo, runId);
     
-    const auditArtifacts = {};
+    const auditArtifacts: Record<string, any> = {};
     for (const artifact of artifacts) {
       if (artifact.name.includes('audit')) {
         auditArtifacts[artifact.name] = {
@@ -201,6 +216,43 @@ async function extractGradeFromRun(owner: string, repo: string, runId: string) {
       const gradeMatch = auditCheck.output.summary.match(/Grade:\s*([A-F][+-]?)/i);
       if (gradeMatch) {
         return gradeMatch[1];
+      }
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function extractGradeFromReport(owner: string, repo: string, runId: string) {
+  try {
+    // Try to get the audit report content from the branch
+    const reportContent = await githubService.getRepositoryContent(
+      owner,
+      repo,
+      'audit/REPORT.md',
+      `chore/audit-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`
+    );
+
+    if ('content' in reportContent) {
+      const content = Buffer.from(reportContent.content, 'base64').toString('utf-8');
+      
+      // Look for grade patterns in the report
+      const gradeMatch = content.match(/(?:Overall Grade|Grade|Score):\s*([A-F][+-]?)/i);
+      if (gradeMatch) {
+        return gradeMatch[1];
+      }
+      
+      // Look for score patterns
+      const scoreMatch = content.match(/(?:Overall Score|Score):\s*(\d+)/i);
+      if (scoreMatch) {
+        const score = parseInt(scoreMatch[1], 10);
+        if (score >= 90) return 'A';
+        if (score >= 80) return 'B';
+        if (score >= 70) return 'C';
+        if (score >= 60) return 'D';
+        return 'F';
       }
     }
 

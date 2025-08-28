@@ -69,7 +69,7 @@ export const GET = withErrorHandler(async function GET(
         // Add GitHub workflow information to response
         audit.githubWorkflow = {
           id: workflowStatus.id,
-          status: workflowStatus.status,
+          status: workflowStatus.status || 'unknown',
           conclusion: workflowStatus.conclusion,
           html_url: workflowStatus.html_url,
           created_at: workflowStatus.created_at,

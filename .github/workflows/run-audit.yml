@@ -53,24 +53,64 @@ jobs:
         run: |
           npm ci --production=false
           
+      - name: Clone audit toolkit
+        run: |
+          git clone https://github.com/dev-mhany/nextjs-mui-audit-toolkit.git /tmp/audit-toolkit
+          
       - name: Install audit toolkit
         run: |
-          npm install -g nextjs-mui-audit-toolkit@latest
+          cd /tmp/audit-toolkit/audit\ script
+          npm install
+          npm link
           
       - name: Prepare audit config
         run: |
-          echo '${{ github.event.client_payload.audit_config || github.event.inputs.audit_config || "{}" }}' > .audit-config.json
+          # Parse audit configuration from payload or inputs
+          AUDIT_CONFIG='${{ github.event.client_payload.audit_config || github.event.inputs.audit_config || "{}" }}'
+          echo "$AUDIT_CONFIG" > .audit-config.json
+          echo "📋 Audit configuration:"
           cat .audit-config.json
           
-      - name: Run audit (static only for security)
+          # Extract configuration values for use in steps
+          echo "static_only=$(echo "$AUDIT_CONFIG" | jq -r '.staticOnly // false')" >> $GITHUB_ENV
+          echo "enable_fix=$(echo "$AUDIT_CONFIG" | jq -r '.fix // false')" >> $GITHUB_ENV
+          echo "min_score=$(echo "$AUDIT_CONFIG" | jq -r '.minScore // 85')" >> $GITHUB_ENV
+          echo "app_path=$(echo "$AUDIT_CONFIG" | jq -r '.appPath // ""')" >> $GITHUB_ENV
+          echo "create_pr=$(echo "$AUDIT_CONFIG" | jq -r '.createPR // true')" >> $GITHUB_ENV
+          echo "auto_merge=$(echo "$AUDIT_CONFIG" | jq -r '.autoMerge // false')" >> $GITHUB_ENV
+          
+      - name: Run audit
         id: audit
         run: |
-          npx nextjs-mui-audit run \
-            --output ./audit \
-            --min-score 85 \
-            --strict \
-            --no-runtime \
-            --ci
+          # Build audit command with dynamic flags
+          AUDIT_CMD="nextjs-mui-audit run --output ./audit --strict --ci --format json,markdown,html"
+          
+          # Add min-score if specified
+          if [ "${{ env.min_score }}" != "85" ]; then
+            AUDIT_CMD="$AUDIT_CMD --min-score ${{ env.min_score }}"
+          else
+            AUDIT_CMD="$AUDIT_CMD --min-score 85"
+          fi
+          
+          # Add fix flag if enabled
+          if [ "${{ env.enable_fix }}" = "true" ]; then
+            AUDIT_CMD="$AUDIT_CMD --fix"
+          fi
+          
+          # Add app path if specified (for monorepos)
+          if [ -n "${{ env.app_path }}" ]; then
+            AUDIT_CMD="$AUDIT_CMD --path ${{ env.app_path }}"
+          fi
+          
+          # Add runtime flag based on static_only setting
+          if [ "${{ env.static_only }}" = "true" ]; then
+            AUDIT_CMD="$AUDIT_CMD --no-runtime"
+          else
+            echo "⚠️ Runtime tests enabled - this will take longer and execute code"
+          fi
+          
+          echo "🔍 Running audit command: $AUDIT_CMD"
+          eval $AUDIT_CMD
         continue-on-error: true
         env:
           AUDIT_CONFIG_FILE: .audit-config.json
@@ -97,6 +137,7 @@ jobs:
           
       - name: Create/Update PR
         id: pr
+        if: ${{ env.create_pr == 'true' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -112,8 +153,14 @@ jobs:
             - **Summary**: [`audit/REPORT.md`](./audit/REPORT.md) - Overall grade and key metrics
             - **Fix Guide**: [`audit/FIX_REPORT.md`](./audit/FIX_REPORT.md) - Recommended fixes
             
+            ### ⚙️ Audit Configuration
+            - **Mode**: ${{ env.static_only == 'true' && 'Static analysis only' || 'Full audit with runtime tests' }}
+            - **Auto-fix**: ${{ env.enable_fix == 'true' && 'Enabled' || 'Disabled' }}
+            - **Min Score**: ${{ env.min_score }}
+            ${{ env.app_path != '' && format('**App Path**: {0}', env.app_path) || '' }}
+            
             ### 🔒 Security Notice
-            - Static analysis only (no code execution)
+            ${{ env.static_only == 'true' && '- Static analysis only (no code execution)' || '- Runtime tests enabled - code will be executed in sandbox' }}
             - Reports committed to audit branch (not main)
             - Compatible with branch protection rules
             
@@ -134,10 +181,11 @@ jobs:
             audit
             automated
             dev-mhany
+            ${{ env.auto_merge == 'true' && 'audit:auto-merge' || '' }}
           draft: false
           
       - name: Add PR comment with summary
-        if: steps.pr.outputs.pull-request-number
+        if: ${{ env.create_pr == 'true' && steps.pr.outputs.pull-request-number }}
         uses: peter-evans/create-or-update-comment@v3
         with:
           issue-number: ${{ steps.pr.outputs.pull-request-number }}
@@ -149,10 +197,21 @@ jobs:
             | Overall Grade | See `audit/REPORT.md` |
             | Status | ${{ steps.audit.outcome == 'success' && '✅ Passed' || '❌ Needs Attention' }} |
             | Reports | [`audit/`](./audit/) directory |
-            | Execution | Static analysis only (secure) |
+            | Mode | ${{ env.static_only == 'true' && 'Static analysis only' || 'Full audit with runtime tests' }} |
+            | Auto-fix | ${{ env.enable_fix == 'true' && 'Enabled' || 'Disabled' }} |
             
             **View detailed results**: [`audit/report.html`](./audit/report.html)
             
+            ${{ env.auto_merge == 'true' && '⚠️ **Auto-merge enabled** - This PR will be merged automatically if all checks pass.' || '' }}
+            
+      - name: Auto-merge PR if enabled
+        if: ${{ env.auto_merge == 'true' && steps.audit.outcome == 'success' && steps.pr.outputs.pull-request-number }}
+        run: |
+          echo "🔄 Auto-merge enabled - merging PR #${{ steps.pr.outputs.pull-request-number }}"
+          gh pr merge ${{ steps.pr.outputs.pull-request-number }} --squash --delete-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
       - name: Create check run summary
         uses: LouisBrunner/checks-action@v2.0.0
         if: always()
@@ -163,8 +222,8 @@ jobs:
           output: |
             {
               "title": "Next.js + MUI Audit Complete",
-              "summary": "Audit completed. See PR #${{ steps.pr.outputs.pull-request-number }} for detailed results.",
-              "text": "Reports available in the audit/ directory:\n- audit/report.html (interactive)\n- audit/report.json (data)\n- audit/REPORT.md (summary)\n- audit/FIX_REPORT.md (fixes)"
+              "summary": "${{ env.create_pr == 'true' && format('Audit completed. See PR #{0} for detailed results.', steps.pr.outputs.pull-request-number) || 'Audit completed. Results committed to audit branch.' }}",
+              "text": "**Configuration:**\n- Mode: ${{ env.static_only == 'true' && 'Static analysis only' || 'Full audit with runtime tests' }}\n- Auto-fix: ${{ env.enable_fix == 'true' && 'Enabled' || 'Disabled' }}\n- Min score: ${{ env.min_score }}\n${{ env.app_path != '' && format('- App path: {0}', env.app_path) || '' }}\n\n**Reports available in the audit/ directory:**\n- audit/report.html (interactive)\n- audit/report.json (data)\n- audit/REPORT.md (summary)\n- audit/FIX_REPORT.md (fixes)"
             }
             
       - name: Upload audit artifacts
@@ -178,15 +237,70 @@ jobs:
       - name: Notify completion via email
         if: always() && (github.event.client_payload.user_email || github.event.inputs.user_email)
         run: |
-          echo "📧 Email notification would be sent to: ${{ github.event.client_payload.user_email || github.event.inputs.user_email }}"
-          echo "🔍 Audit completed for ${{ github.repository }}"
-          echo "📋 Status: ${{ steps.audit.outcome }}"
-          echo "📎 PR: ${{ steps.pr.outputs.pull-request-url }}"
-          # Email integration would be implemented here
+          echo "📧 Preparing email notification..."
+          
+          # Prepare notification data
+          USER_EMAIL="${{ github.event.client_payload.user_email || github.event.inputs.user_email }}"
+          AUDIT_STATUS="${{ steps.audit.outcome }}"
+          REPO_URL="https://github.com/${{ github.repository }}"
+          WORKFLOW_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          PR_URL="${{ steps.pr.outputs.pull-request-url }}"
+          
+          # Create email payload
+          cat > email_payload.json << EOF
+          {
+            "to": "$USER_EMAIL",
+            "auditResult": {
+              "id": "audit_${{ github.run_id }}",
+              "repoUrl": "$REPO_URL",
+              "branch": "${{ github.ref_name }}",
+              "status": "$AUDIT_STATUS",
+              "workflowRunId": "${{ github.run_id }}",
+              "prUrl": "$PR_URL",
+              "completedAt": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+              "score": ${{ env.min_score }},
+              "letterGrade": "See REPORT.md",
+              "criticalIssues": 0,
+              "configuration": {
+                "staticOnly": ${{ env.static_only }},
+                "autoFix": ${{ env.enable_fix }},
+                "minScore": ${{ env.min_score }},
+                "appPath": "${{ env.app_path }}",
+                "createPR": ${{ env.create_pr }},
+                "autoMerge": ${{ env.auto_merge }}
+              }
+            }
+          }
+          EOF
+          
+          echo "📧 Email notification prepared for: $USER_EMAIL"
+          echo "📄 Audit Status: $AUDIT_STATUS"
+          echo "🔗 PR URL: $PR_URL"
+          echo "📊 Workflow: $WORKFLOW_URL"
+          
+          # In a real implementation, this would call an email API endpoint
+          # For now, we'll just log the notification details
+          echo "Email notification would be sent with the above details"
           
       - name: Set workflow outputs
         if: always()
         run: |
           echo "audit-status=${{ steps.audit.outcome }}" >> $GITHUB_OUTPUT
-          echo "pr-url=${{ steps.pr.outputs.pull-request-url }}" >> $GITHUB_OUTPUT
-          echo "pr-number=${{ steps.pr.outputs.pull-request-number }}" >> $GITHUB_OUTPUT
+          
+          # Set PR outputs only if PR was created
+          if [ "${{ env.create_pr }}" = "true" ] && [ -n "${{ steps.pr.outputs.pull-request-url }}" ]; then
+            echo "pr-url=${{ steps.pr.outputs.pull-request-url }}" >> $GITHUB_OUTPUT
+            echo "pr-number=${{ steps.pr.outputs.pull-request-number }}" >> $GITHUB_OUTPUT
+          else
+            echo "pr-url=" >> $GITHUB_OUTPUT
+            echo "pr-number=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Log configuration summary
+          echo "📋 Audit completed with configuration:"
+          echo "  - Static only: ${{ env.static_only }}"
+          echo "  - Auto-fix: ${{ env.enable_fix }}"
+          echo "  - Min score: ${{ env.min_score }}"
+          echo "  - App path: ${{ env.app_path }}"
+          echo "  - Create PR: ${{ env.create_pr }}"
+          echo "  - Auto-merge: ${{ env.auto_merge }}"

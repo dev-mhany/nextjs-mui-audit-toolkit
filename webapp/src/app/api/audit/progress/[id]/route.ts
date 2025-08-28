@@ -29,13 +29,17 @@ export async function GET(
     // If audit has a workflow run ID, get status from GitHub
     if (audit.workflowRunId && audit.status === 'running') {
       try {
+        // Parse repository URL to get owner and repo
+        const { owner, repo } = parseRepoUrl(audit.repoUrl);
+        
         const workflowStatus = await githubService.getWorkflowRunStatus(
-          audit.repoUrl,
+          owner,
+          repo,
           parseInt(audit.workflowRunId, 10)
         );
 
         // Update audit status based on workflow status
-        let newStatus = audit.status;
+        let newStatus: 'pending' | 'running' | 'completed' | 'failed' | 'queued' = audit.status;
         let score = audit.score;
         let error = audit.error;
 
@@ -55,7 +59,7 @@ export async function GET(
             status: newStatus,
             score,
             error,
-            completedAt: workflowStatus.updatedAt,
+            completedAt: workflowStatus.updated_at,
           });
         }
 
@@ -154,4 +158,16 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+// Helper function to parse GitHub repository URL
+function parseRepoUrl(repoUrl: string): { owner: string; repo: string } {
+  const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  if (!match) {
+    throw new Error('Invalid GitHub repository URL');
+  }
+  return {
+    owner: match[1],
+    repo: match[2].replace(/\.git$/, ''),
+  };
 }

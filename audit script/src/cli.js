@@ -19,6 +19,7 @@ import { logger, setupGlobalErrorHandling, withErrorHandling, AuditError } from 
 import { cacheManager } from './cache-manager.js'
 import { autoFixer } from './auto-fixer.js'
 import { pluginManager } from './plugin-manager.js'
+import { checkAuditEnvironment } from './env-validation.js'
 
 // Set up the main program
 program
@@ -66,6 +67,9 @@ program
   .option('--fix', 'auto-fix issues where possible', false)
   .option('--skip-install', 'skip dependency installation', false)
   .option('--skip-plugins', 'skip plugin loading', false)
+  .option('--no-runtime', 'skip runtime audits (Lighthouse, Playwright)', false)
+  .option('--ci', 'run in CI mode (minimal output, machine-readable)', false)
+  .option('--format <formats>', 'output formats: json,markdown,html', 'json,markdown,html')
   .action(async options => {
     try {
       await runComprehensiveAudit(options)
@@ -179,6 +183,20 @@ program
       await runDoctor()
     } catch (error) {
       logger.error('Doctor command failed', error)
+      process.exit(1)
+    }
+  })
+
+// Environment validation command
+program
+  .command('env')
+  .description('Validate environment configuration')
+  .option('--fix', 'attempt to fix common environment issues', false)
+  .action(async (options) => {
+    try {
+      await validateEnvironment(options)
+    } catch (error) {
+      logger.error('Environment validation failed', error)
       process.exit(1)
     }
   })
@@ -432,6 +450,30 @@ async function showVersion(options) {
   }
 }
 
+async function validateEnvironment(options) {
+  console.log(chalk.blue('\n🔍 Environment Validation\n'))
+  
+  // Run the built-in environment check
+  const envCheck = checkAuditEnvironment()
+  
+  if (options.fix) {
+    console.log(chalk.yellow('\n🔧 Attempting to fix environment issues...'))
+    
+    // Check if .env file exists
+    if (!existsSync('.env')) {
+      console.log('Creating .env template...')
+      const { generateEnvTemplate } = await import('./env-validation.js')
+      await writeFile('.env', generateEnvTemplate())
+      console.log(chalk.green('✓ .env template created'))
+    }
+    
+    // Additional fixes can be added here
+    console.log(chalk.blue('\nPlease edit .env file with your actual values'))
+  }
+  
+  console.log(chalk.green('\n✅ Environment validation complete'))
+}
+
 async function runDoctor() {
   console.log(chalk.blue('\\n🩺 Environment Check\\n'))
 
@@ -533,30 +575,43 @@ async function runWatchMode(options) {
 async function runComprehensiveAudit(options) {
   const startTime = Date.now()
 
-  console.log(chalk.blue('\n🚀 Next.js + MUI Comprehensive Audit\n'))
+  // CI mode setup
+  const isCI = options.ci
+  if (!isCI) {
+    console.log(chalk.blue('\n🚀 Next.js + MUI Comprehensive Audit\n'))
+  }
 
   // Setup logging
   if (options.verbose) {
     logger.setLevel('debug')
+  } else if (isCI) {
+    logger.setLevel('warn') // Minimal output in CI
   }
 
   setupGlobalErrorHandling(logger)
 
   try {
+    // Parse format options
+    const formats = options.format ? options.format.split(',').map(f => f.trim()) : ['json', 'markdown', 'html']
+
     // Step 1: Environment check
-    console.log(chalk.yellow('🔍 Step 1: Environment Check'))
-    await runDoctor()
+    if (!isCI) {
+      console.log(chalk.yellow('🔍 Step 1: Environment Check'))
+      await runDoctor()
+    }
 
     // Step 2: Install dependencies if needed
-    if (!options.skipInstall) {
+    if (!options.skipInstall && !isCI) {
       console.log(chalk.yellow('\n📦 Step 2: Installing Dependencies'))
       await ensureDependencies()
-    } else {
+    } else if (!isCI) {
       console.log(chalk.gray('\n⏭️ Step 2: Skipping dependency installation'))
     }
 
     // Step 3: Load configuration
-    console.log(chalk.yellow('\n⚙️ Step 3: Loading Configuration'))
+    if (!isCI) {
+      console.log(chalk.yellow('\n⚙️ Step 3: Loading Configuration'))
+    }
     const config = await configManager.loadConfig(options.config)
     configManager.validate()
 
@@ -565,47 +620,78 @@ async function runComprehensiveAudit(options) {
     if (options.strict !== undefined) config.thresholds.failOnCritical = options.strict
     if (options.output) config.output.directory = options.output
     if (options.verbose) config.output.verbose = true
+    
+    // Set output formats
+    config.output.formats = formats
 
-    console.log(chalk.green('✓ Configuration loaded successfully'))
+    if (!isCI) {
+      console.log(chalk.green('✓ Configuration loaded successfully'))
+    }
 
     // Step 4: Load plugins
-    if (!options.skipPlugins) {
+    if (!options.skipPlugins && !isCI) {
       console.log(chalk.yellow('\n🔌 Step 4: Loading Plugins'))
       await loadConfiguredPlugins(config)
-    } else {
+    } else if (!isCI) {
       console.log(chalk.gray('\n⏭️ Step 4: Skipping plugin loading'))
     }
 
     // Step 5: Initialize cache
-    console.log(chalk.yellow('\n💾 Step 5: Initializing Cache'))
+    if (!isCI) {
+      console.log(chalk.yellow('\n💾 Step 5: Initializing Cache'))
+    }
     await cacheManager.initialize()
-    console.log(chalk.green('✓ Cache initialized'))
+    if (!isCI) {
+      console.log(chalk.green('✓ Cache initialized'))
+    }
 
     // Step 6: Create output directory
-    console.log(chalk.yellow('\n📁 Step 6: Preparing Output Directory'))
+    if (!isCI) {
+      console.log(chalk.yellow('\n📁 Step 6: Preparing Output Directory'))
+    }
     await createAuditDirectory(config.output.directory)
-    console.log(chalk.green(`✓ Output directory ready: ${config.output.directory}`))
+    if (!isCI) {
+      console.log(chalk.green(`✓ Output directory ready: ${config.output.directory}`))
+    }
 
     // Step 7: Run comprehensive audit
-    console.log(chalk.yellow('\n🔍 Step 7: Running Comprehensive Audit'))
+    if (!isCI) {
+      console.log(chalk.yellow('\n🔍 Step 7: Running Comprehensive Audit'))
+    }
 
     logger.auditStart(options.path)
 
     // Run all audit components
-    console.log(chalk.blue('  🔧 Running ESLint analysis...'))
+    if (!isCI) {
+      console.log(chalk.blue('  🔧 Running ESLint analysis...'))
+    }
     const eslintResults = await runESLint(options.path)
 
-    console.log(chalk.blue('  🔍 Scanning project files...'))
+    if (!isCI) {
+      console.log(chalk.blue('  🔍 Scanning project files...'))
+    }
     const scanResults = await scanProject(options.path, config)
 
-    console.log(chalk.blue('  📱 Running PWA audit...'))
+    if (!isCI) {
+      console.log(chalk.blue('  📱 Running PWA audit...'))
+    }
     const pwaResults = await runPWAAudit(options.path)
 
-    console.log(chalk.blue('  🎭 Running runtime audits...'))
-    const runtimeResults = await runRuntimeAudits(options.path)
+    // Skip runtime audits if --no-runtime is specified
+    let runtimeResults = {}
+    if (!options.noRuntime) {
+      if (!isCI) {
+        console.log(chalk.blue('  🎭 Running runtime audits...'))
+      }
+      runtimeResults = await runRuntimeAudits(options.path)
+    } else if (!isCI) {
+      console.log(chalk.gray('  ⏭️ Skipping runtime audits (--no-runtime)'))
+    }
 
     // Step 8: Calculate grades
-    console.log(chalk.yellow('\n📊 Step 8: Calculating Grades'))
+    if (!isCI) {
+      console.log(chalk.yellow('\n📊 Step 8: Calculating Grades'))
+    }
     const combinedResults = {
       ...scanResults,
       eslint: eslintResults,
@@ -614,22 +700,30 @@ async function runComprehensiveAudit(options) {
     }
 
     const grades = await calculateGrades(combinedResults)
-    console.log(chalk.green(`✓ Overall Score: ${grades.overallScore}/100 (${grades.letterGrade})`))
+    if (!isCI) {
+      console.log(chalk.green(`✓ Overall Score: ${grades.overallScore}/100 (${grades.letterGrade})`))
+    }
 
     // Step 9: Auto-fix if requested
     if (options.fix) {
-      console.log(chalk.yellow('\n🔧 Step 9: Auto-fixing Issues'))
+      if (!isCI) {
+        console.log(chalk.yellow('\n🔧 Step 9: Auto-fixing Issues'))
+      }
       const fixResults = await autoFixer.fixProject(scanResults, {
         dryRun: false,
         backup: true
       })
-      console.log(
-        chalk.green(`✓ Fixed ${fixResults.totalFixes} issues in ${fixResults.fixedFiles} files`)
-      )
+      if (!isCI) {
+        console.log(
+          chalk.green(`✓ Fixed ${fixResults.totalFixes} issues in ${fixResults.fixedFiles} files`)
+        )
+      }
 
       // Re-run scan after fixes
       if (fixResults.totalFixes > 0) {
-        console.log(chalk.blue('  🔄 Re-scanning after fixes...'))
+        if (!isCI) {
+          console.log(chalk.blue('  🔄 Re-scanning after fixes...'))
+        }
         const updatedScanResults = await scanProject(options.path, config)
         const updatedGrades = await calculateGrades({
           ...updatedScanResults,
@@ -640,31 +734,57 @@ async function runComprehensiveAudit(options) {
         combinedResults.scanResults = updatedScanResults
         grades.overallScore = updatedGrades.overallScore
         grades.letterGrade = updatedGrades.letterGrade
-        console.log(
-          chalk.green(`✓ Updated Score: ${grades.overallScore}/100 (${grades.letterGrade})`)
-        )
+        if (!isCI) {
+          console.log(
+            chalk.green(`✓ Updated Score: ${grades.overallScore}/100 (${grades.letterGrade})`)
+          )
+        }
       }
-    } else {
+    } else if (!isCI) {
       console.log(chalk.gray('\n⏭️ Step 9: Skipping auto-fix (use --fix to enable)'))
     }
 
     // Step 10: Generate reports
-    console.log(chalk.yellow('\n📄 Step 10: Generating Reports'))
-    await generateReport(combinedResults, grades, config)
-    console.log(chalk.green(`✓ Reports generated in ${config.output.directory}`))
+    if (!isCI) {
+      console.log(chalk.yellow('\n📄 Step 10: Generating Reports'))
+    }
+    await generateReport(combinedResults, grades, config.output.directory, config)
+    if (!isCI) {
+      console.log(chalk.green(`✓ Reports generated in ${config.output.directory}`))
+    }
 
     // Step 11: Show summary
     const endTime = Date.now()
     const duration = Math.round((endTime - startTime) / 1000)
 
-    console.log(chalk.blue('\n🏁 Audit Summary:'))
-    console.log(`   📁 Project: ${options.path}`)
-    console.log(
-      `   📊 Overall Score: ${chalk.bold(grades.overallScore)}/100 (${chalk.bold(grades.letterGrade)})`
-    )
-    console.log(`   🔴 Critical Issues: ${chalk.bold(grades.criticalIssues)}`)
-    console.log(`   📄 Reports: ${config.output.directory}`)
-    console.log(`   ⏱️ Duration: ${duration}s`)
+    if (isCI) {
+      // CI mode: Output machine-readable summary
+      const ciOutput = {
+        timestamp: new Date().toISOString(),
+        project: options.path,
+        score: grades.overallScore,
+        grade: grades.letterGrade,
+        criticalIssues: grades.criticalIssues,
+        totalIssues: grades.totalIssues,
+        passed: grades.overallScore >= config.thresholds.minScore && 
+               (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
+        reports: {
+          directory: config.output.directory,
+          formats: formats
+        },
+        duration: duration
+      }
+      console.log(JSON.stringify(ciOutput, null, 2))
+    } else {
+      console.log(chalk.blue('\n🏁 Audit Summary:'))
+      console.log(`   📁 Project: ${options.path}`)
+      console.log(
+        `   📊 Overall Score: ${chalk.bold(grades.overallScore)}/100 (${chalk.bold(grades.letterGrade)})`
+      )
+      console.log(`   🔴 Critical Issues: ${chalk.bold(grades.criticalIssues)}`)
+      console.log(`   📄 Reports: ${config.output.directory}`)
+      console.log(`   ⏱️ Duration: ${duration}s`)
+    }
 
     // Check thresholds
     const passed =
@@ -672,35 +792,43 @@ async function runComprehensiveAudit(options) {
       (!config.thresholds.failOnCritical || grades.criticalIssues === 0)
 
     if (passed) {
-      console.log(chalk.green('\n✅ Audit PASSED! 🎉'))
-      console.log(chalk.green('Your project meets the quality standards.'))
+      if (!isCI) {
+        console.log(chalk.green('\n✅ Audit PASSED! 🎉'))
+        console.log(chalk.green('Your project meets the quality standards.'))
+      }
     } else {
-      console.log(chalk.red('\n❌ Audit FAILED! ⚠️'))
-      if (grades.overallScore < config.thresholds.minScore) {
-        console.log(
-          chalk.red(`Score ${grades.overallScore} is below minimum ${config.thresholds.minScore}`)
-        )
-      }
-      if (config.thresholds.failOnCritical && grades.criticalIssues > 0) {
-        console.log(chalk.red(`${grades.criticalIssues} critical issues must be resolved`))
-      }
+      if (!isCI) {
+        console.log(chalk.red('\n❌ Audit FAILED! ⚠️'))
+        if (grades.overallScore < config.thresholds.minScore) {
+          console.log(
+            chalk.red(`Score ${grades.overallScore} is below minimum ${config.thresholds.minScore}`)
+          )
+        }
+        if (config.thresholds.failOnCritical && grades.criticalIssues > 0) {
+          console.log(chalk.red(`${grades.criticalIssues} critical issues must be resolved`))
+        }
 
-      console.log(chalk.yellow('\n💡 Suggestions:'))
-      console.log('  • Run with --fix to auto-fix common issues')
-      console.log('  • Check the detailed report for specific recommendations')
-      console.log('  • Use --verbose for more detailed output')
+        console.log(chalk.yellow('\n💡 Suggestions:'))
+        console.log('  • Run with --fix to auto-fix common issues')
+        console.log('  • Check the detailed report for specific recommendations')
+        console.log('  • Use --verbose for more detailed output')
+      }
 
       if (!passed && (options.strict || config.thresholds.failOnCritical)) {
         process.exit(1)
       }
     }
 
-    console.log(chalk.blue('\n📄 Next Steps:'))
-    console.log(`  • View detailed report: open ${config.output.directory}/REPORT.html`)
-    console.log(`  • Run in watch mode: npx nextjs-mui-audit run --watch`)
-    console.log(`  • Fix issues: npx nextjs-mui-audit fix`)
+    if (!isCI) {
+      console.log(chalk.blue('\n📄 Next Steps:'))
+      console.log(`  • View detailed report: open ${config.output.directory}/REPORT.html`)
+      console.log(`  • Run in watch mode: npx nextjs-mui-audit run --watch`)
+      console.log(`  • Fix issues: npx nextjs-mui-audit fix`)
+    }
   } catch (error) {
-    console.log(chalk.red('\n❌ Comprehensive audit failed'))
+    if (!isCI) {
+      console.log(chalk.red('\n❌ Comprehensive audit failed'))
+    }
     logger.error('Comprehensive audit error', error)
     throw error
   }

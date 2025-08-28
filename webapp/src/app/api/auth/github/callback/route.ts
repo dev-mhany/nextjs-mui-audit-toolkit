@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { githubService } from '@/lib/github';
 import { withErrorHandler, logger } from '@/lib/error-handling';
+import type { AuditResult } from '@/types/audit';
 
 export const GET = withErrorHandler(async function GET(request: NextRequest) {
   try {
@@ -33,9 +34,20 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
       accountLogin: installation.account.login,
       repositorySelection: installation.repository_selection,
       permissions: installation.permissions,
-      setupAction,
+      setupAction: setupAction || undefined,
       createdAt: new Date().toISOString(),
     });
+
+    // Create user session linked to installation
+    const session = await db.createSession(
+      installation.id,
+      installation.account.id?.toString(),
+      {
+        accountLogin: installation.account.login,
+        accountType: installation.account.type,
+        setupAction,
+      }
+    );
 
     logger.info('GitHub App installation processed', {
       installationId: installation.id,
@@ -52,7 +64,18 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
     successUrl.searchParams.set('account', installation.account.login);
     successUrl.searchParams.set('setup_action', setupAction || 'install');
 
-    return NextResponse.redirect(successUrl);
+    const response = NextResponse.redirect(successUrl);
+    
+    // Set session cookie (httpOnly for security)
+    response.cookies.set('audit_session', session.sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60, // 24 hours
+      path: '/'
+    });
+
+    return response;
 
   } catch (error: any) {
     logger.error('GitHub App callback failed', {
@@ -225,19 +248,54 @@ async function handleCheckRunEvent(payload: any) {
     
     if (auditId) {
       const grade = extractGradeFromCheckRun(check_run);
+      const score = extractScoreFromCheckRun(check_run);
       
-      await db.updateAudit(auditId, {
-        status: check_run.conclusion === 'success' ? 'completed' : 'failed',
-        grade,
+      const auditUpdate: Partial<AuditResult> = {
+        status: (check_run.conclusion === 'success' ? 'completed' : 'failed') as 'completed' | 'failed',
+        grade: grade || undefined,
+        score: score || undefined,
         checkRunUrl: check_run.html_url,
+        completedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+      };
+      
+      const updatedAudit = await db.updateAudit(auditId, auditUpdate);
       
       logger.info('Audit check run completed', {
         auditId,
         conclusion: check_run.conclusion,
         grade,
+        score,
       });
+      
+      // Send email notification if audit record has email
+      if (updatedAudit?.userEmail) {
+        try {
+          const emailResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/email/notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: updatedAudit.userEmail,
+              auditResult: updatedAudit,
+              templateType: check_run.conclusion === 'success' ? 'completion' : 'failure'
+            })
+          });
+          
+          if (!emailResponse.ok) {
+            logger.warn('Failed to send email notification', {
+              auditId,
+              email: updatedAudit.userEmail,
+              status: emailResponse.status
+            });
+          }
+        } catch (error: any) {
+          logger.error('Error sending email notification', {
+            auditId,
+            email: updatedAudit.userEmail,
+            error: error.message
+          });
+        }
+      }
     }
   }
 }
@@ -262,6 +320,13 @@ function extractAuditIdFromCheckRun(checkRun: any): string | null {
 function extractGradeFromCheckRun(checkRun: any): string | null {
   const summaryMatch = checkRun.output?.summary?.match(/Grade:\s*([A-F][+-]?)/i);
   if (summaryMatch) return summaryMatch[1];
+  
+  return null;
+}
+
+function extractScoreFromCheckRun(checkRun: any): number | null {
+  const scoreMatch = checkRun.output?.summary?.match(/Score:\s*(\d+)/i);
+  if (scoreMatch) return parseInt(scoreMatch[1], 10);
   
   return null;
 }

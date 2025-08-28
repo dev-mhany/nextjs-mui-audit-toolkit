@@ -233,11 +233,19 @@ function scanFile(content, relativePath, absolutePath, config = null) {
 
   // Process file with plugins if available
   try {
-    content = pluginManager.processFile
+    const processedContent = pluginManager.processFile
       ? pluginManager.processFile(relativePath, content, extension)
       : content
+
+    // Ensure content remains a string
+    if (typeof processedContent === 'string') {
+      content = processedContent
+    } else {
+      logger.warn(`Plugin returned non-string content for ${relativePath}, using original content`)
+    }
   } catch (error) {
     // Continue with original content if processing fails
+    logger.warn(`Plugin processing failed for ${relativePath}: ${error.message}`)
   }
 
   // Execute beforeFileProcess hooks
@@ -269,6 +277,12 @@ function scanFile(content, relativePath, absolutePath, config = null) {
 
 function checkRule(rule, content, lines, filePath, config = null) {
   const issues = []
+
+  // Ensure content is a string before processing
+  if (typeof content !== 'string') {
+    logger.warn(`Content is not a string for ${filePath}, skipping rule ${rule.id}`)
+    return issues
+  }
 
   if (rule.pattern) {
     // Ensure pattern is global for matchAll
