@@ -259,7 +259,10 @@ $RECYCLE.BIN/
 # Build artifacts
 build/
 dist/
-lib/
+# Compiled libraries (not source code)
+/lib/
+node_modules/lib/
+*/build/lib/
 
 # Test artifacts
 .jest/
