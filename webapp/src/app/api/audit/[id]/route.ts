@@ -3,6 +3,9 @@ import { db } from '@/lib/database';
 import { githubService } from '@/lib/github';
 import { withErrorHandler, logger, performanceMonitor, gitHubCircuitBreaker } from '@/lib/error-handling';
 
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export const GET = withErrorHandler(async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

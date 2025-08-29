@@ -3,7 +3,10 @@ import { githubService } from '@/lib/github';
 import { db } from '@/lib/database';
 import { validateAuditRequest } from '@/lib/validation';
 import { withErrorHandler, logger, performanceMonitor, gitHubCircuitBreaker } from '@/lib/error-handling';
-import type { AuditRequest } from '@/types/audit';
+import type { AuditRequest, GitHubRepository } from '@/types/audit';
+
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
 
 export const POST = withErrorHandler(async function POST(request: NextRequest) {
   const endTimer = performanceMonitor.startTimer('audit_trigger');
@@ -17,7 +20,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     const github = new (githubService.constructor as any)(body.githubToken);
 
     // Validate repository access using circuit breaker
-    let repoInfo: Record<string, unknown>;
+    let repoInfo: GitHubRepository;
     try {
       repoInfo = await gitHubCircuitBreaker.execute(() => 
         github.validateRepository(body.repoUrl, body.githubToken)
@@ -25,7 +28,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     } catch (error: unknown) {
       logger.securityEvent('repository_access_denied', {
         repoUrl: body.repoUrl,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         ip: request.ip,
       });
       throw error;
@@ -106,14 +109,14 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
       // Update audit record with error
       await db.updateAudit(auditRecord.id, {
         status: 'failed',
-        error: triggerResult.error,
+        error: triggerResult.error as string,
       });
 
       logger.error('Audit failed', {
         auditId: auditRecord.id,
-        error: triggerResult.error || 'Unknown error',
+        error: (triggerResult.error as string) || 'Unknown error',
       });
-      throw new Error(`Failed to trigger audit workflow: ${triggerResult.error}`);
+      throw new Error(`Failed to trigger audit workflow: ${triggerResult.error as string}`);
     }
 
     // Update audit record with workflow run ID

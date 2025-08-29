@@ -5,6 +5,9 @@ import { validateCreateAuditRequest } from '@/lib/validation';
 import { withErrorHandler, logger, performanceMonitor, gitHubCircuitBreaker } from '@/lib/error-handling';
 import type { CreateAuditRequest } from '@/types/audit';
 
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export const POST = withErrorHandler(async function POST(request: NextRequest) {
   const endTimer = performanceMonitor.startTimer('create_audit');
   
@@ -61,7 +64,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     await db.updateAudit(auditRecord.id, {
       status: 'running',
       workflowRunId: triggerResult.runId?.toString(),
-      prUrl: triggerResult.prUrl,
+      prUrl: (triggerResult as any).prUrl,
     });
 
     endTimer();
@@ -69,7 +72,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       runId: triggerResult.runId,
-      prUrl: triggerResult.prUrl,
+      prUrl: (triggerResult as any).prUrl,
       auditId: auditRecord.id,
       message: 'Audit triggered successfully',
     });

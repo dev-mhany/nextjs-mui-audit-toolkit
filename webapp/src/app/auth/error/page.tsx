@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, Suspense } from 'react'
 import {
   Box,
   Card,
@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -208,5 +208,24 @@ export default function AuthErrorPage() {
         </CardContent>
       </Card>
     </Box>
+  )
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    }>
+      <AuthErrorContent />
+    </Suspense>
   )
 }

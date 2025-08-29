@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/database';
 import { githubService } from '@/lib/github';
 import { withErrorHandler, logger, gitHubCircuitBreaker } from '@/lib/error-handling';
+import type { AuditResult } from '@/types/audit';
+
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
 
 export const GET = withErrorHandler(async function GET(request: NextRequest) {
   try {
@@ -97,7 +101,7 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
   }
 });
 
-async function getLiveAuditStatus(audit: Record<string, unknown>) {
+async function getLiveAuditStatus(audit: AuditResult) {
   try {
     const { owner, repo } = parseRepoUrl(audit.repoUrl);
     

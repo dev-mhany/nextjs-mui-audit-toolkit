@@ -3,6 +3,9 @@ import { emailService } from '@/lib/email';
 import { withErrorHandler, logger } from '@/lib/error-handling';
 import { sanitizeEmail } from '@/lib/validation';
 
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export const POST = withErrorHandler(async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
@@ -91,7 +94,7 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
       { 
         success: false,
         error: 'Email test failed', 
-        details: error.message,
+        details: error instanceof Error ? error.message : String(error),
         configured: !!emailService,
       },
       { status: 500 }

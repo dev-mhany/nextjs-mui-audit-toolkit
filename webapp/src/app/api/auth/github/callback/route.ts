@@ -4,6 +4,9 @@ import { githubService } from '@/lib/github';
 import { withErrorHandler, logger } from '@/lib/error-handling';
 import type { AuditResult } from '@/types/audit';
 
+// Force Node.js runtime for this API route
+export const runtime = 'nodejs';
+
 export const GET = withErrorHandler(async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -170,26 +173,26 @@ async function handleInstallationEvent(payload: Record<string, unknown>) {
   
   if (action === 'created') {
     await db.storeInstallation({
-      installationId: installation.id,
-      accountType: installation.account.type,
-      accountLogin: installation.account.login,
-      repositorySelection: installation.repository_selection,
-      permissions: installation.permissions,
+      installationId: (installation as any).id,
+      accountType: (installation as any).account.type,
+      accountLogin: (installation as any).account.login,
+      repositorySelection: (installation as any).repository_selection,
+      permissions: (installation as any).permissions,
       setupAction: 'webhook_install',
       createdAt: new Date().toISOString(),
     });
     
     logger.info('GitHub App installed via webhook', {
-      installationId: installation.id,
-      account: installation.account.login,
+      installationId: (installation as any).id,
+      account: (installation as any).account.login,
     });
     
   } else if (action === 'deleted') {
-    await db.removeInstallation(installation.id);
+    await db.removeInstallation((installation as any).id);
     
     logger.info('GitHub App uninstalled', {
-      installationId: installation.id,
-      account: installation.account.login,
+      installationId: (installation as any).id,
+      account: (installation as any).account.login,
     });
   }
 }
@@ -198,17 +201,17 @@ async function handleInstallationRepositoriesEvent(payload: Record<string, unkno
   const { action, installation, repositories_added, repositories_removed } = payload;
   
   logger.info('Installation repositories changed', {
-    installationId: installation.id,
+    installationId: (installation as any).id,
     action,
-    added: repositories_added?.length || 0,
-    removed: repositories_removed?.length || 0,
+    added: (repositories_added as any[])?.length || 0,
+    removed: (repositories_removed as any[])?.length || 0,
   });
   
   // Update installation record with new repository list
   await db.updateInstallationRepositories(
-    installation.id,
-    repositories_added,
-    repositories_removed
+    (installation as any).id,
+    repositories_added as any[],
+    repositories_removed as any[]
   );
 }
 
@@ -216,24 +219,24 @@ async function handlePullRequestEvent(payload: Record<string, unknown>) {
   const { action, pull_request, repository } = payload;
   
   // Check if this is an audit PR
-  if (pull_request.head.ref?.startsWith('chore/audit-') && 
-      pull_request.title?.includes('Audit: Next.js + MUI')) {
+  if ((pull_request as any).head.ref?.startsWith('chore/audit-') && 
+      (pull_request as any).title?.includes('Audit: Next.js + MUI')) {
     
-    const auditId = extractAuditIdFromPR(pull_request);
+    const auditId = extractAuditIdFromPR(pull_request as any);
     
     if (auditId) {
       await db.updateAudit(auditId, {
-        prUrl: pull_request.html_url,
-        prNumber: pull_request.number,
-        prState: pull_request.state,
+        prUrl: (pull_request as any).html_url,
+        prNumber: (pull_request as any).number,
+        prState: (pull_request as any).state,
         updatedAt: new Date().toISOString(),
       });
       
       logger.info('Audit PR updated', {
         auditId,
-        prUrl: pull_request.html_url,
+        prUrl: (pull_request as any).html_url,
         action,
-        state: pull_request.state,
+        state: (pull_request as any).state,
       });
     }
   }
@@ -243,18 +246,18 @@ async function handleCheckRunEvent(payload: Record<string, unknown>) {
   const { action, check_run, repository } = payload;
   
   // Check if this is our audit check run
-  if (check_run.name?.includes('dev-mhany audit') && action === 'completed') {
-    const auditId = extractAuditIdFromCheckRun(check_run);
+  if ((check_run as any).name?.includes('dev-mhany audit') && action === 'completed') {
+    const auditId = extractAuditIdFromCheckRun(check_run as any);
     
     if (auditId) {
-      const grade = extractGradeFromCheckRun(check_run);
-      const score = extractScoreFromCheckRun(check_run);
+      const grade = extractGradeFromCheckRun(check_run as any);
+      const score = extractScoreFromCheckRun(check_run as any);
       
       const auditUpdate: Partial<AuditResult> = {
-        status: (check_run.conclusion === 'success' ? 'completed' : 'failed') as 'completed' | 'failed',
+        status: ((check_run as any).conclusion === 'success' ? 'completed' : 'failed') as 'completed' | 'failed',
         grade: grade || undefined,
         score: score || undefined,
-        checkRunUrl: check_run.html_url,
+        checkRunUrl: (check_run as any).html_url,
         completedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -263,7 +266,7 @@ async function handleCheckRunEvent(payload: Record<string, unknown>) {
       
       logger.info('Audit check run completed', {
         auditId,
-        conclusion: check_run.conclusion,
+        conclusion: (check_run as any).conclusion,
         grade,
         score,
       });
@@ -277,7 +280,7 @@ async function handleCheckRunEvent(payload: Record<string, unknown>) {
             body: JSON.stringify({
               to: updatedAudit.userEmail,
               auditResult: updatedAudit,
-              templateType: check_run.conclusion === 'success' ? 'completion' : 'failure'
+              templateType: (check_run as any).conclusion === 'success' ? 'completion' : 'failure'
             })
           });
           
@@ -301,31 +304,31 @@ async function handleCheckRunEvent(payload: Record<string, unknown>) {
 }
 
 function extractAuditIdFromPR(pullRequest: Record<string, unknown>): string | null {
-  const bodyMatch = pullRequest.body?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
+  const bodyMatch = (pullRequest.body as string)?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
   if (bodyMatch) return bodyMatch[1];
   
-  const branchMatch = pullRequest.head.ref?.match(/audit[_-]([a-zA-Z0-9-]+)/);
+  const branchMatch = (pullRequest.head as any)?.ref?.match(/audit[_-]([a-zA-Z0-9-]+)/);
   if (branchMatch) return branchMatch[1];
   
   return null;
 }
 
 function extractAuditIdFromCheckRun(checkRun: Record<string, unknown>): string | null {
-  const summaryMatch = checkRun.output?.summary?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
+  const summaryMatch = (checkRun.output as any)?.summary?.match(/audit[_-]id:\s*([a-zA-Z0-9-]+)/i);
   if (summaryMatch) return summaryMatch[1];
   
   return null;
 }
 
 function extractGradeFromCheckRun(checkRun: Record<string, unknown>): string | null {
-  const summaryMatch = checkRun.output?.summary?.match(/Grade:\s*([A-F][+-]?)/i);
+  const summaryMatch = (checkRun.output as any)?.summary?.match(/Grade:\s*([A-F][+-]?)/i);
   if (summaryMatch) return summaryMatch[1];
   
   return null;
 }
 
 function extractScoreFromCheckRun(checkRun: Record<string, unknown>): number | null {
-  const scoreMatch = checkRun.output?.summary?.match(/Score:\s*(\d+)/i);
+  const scoreMatch = (checkRun.output as any)?.summary?.match(/Score:\s*(\d+)/i);
   if (scoreMatch) return parseInt(scoreMatch[1], 10);
   
   return null;
