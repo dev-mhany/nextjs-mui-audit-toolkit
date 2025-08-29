@@ -353,11 +353,11 @@ async function generatePlugin(templateType, pluginName, options = {}) {
     await mkdir(pluginsDir, { recursive: true });
   }
   
-  const fileName = \`\${pluginName}.js\`;
+  const fileName = `${pluginName}.js`;
   const filePath = join(pluginsDir, fileName);
   
   if (existsSync(filePath) && !options.overwrite) {
-    throw new Error(\`Plugin file "\${fileName}" already exists. Use --overwrite to replace it.\`);
+    throw new Error(`Plugin file "${fileName}" already exists. Use --overwrite to replace it.`);
   }
   
   await writeFile(filePath, pluginContent);
@@ -376,8 +376,7 @@ async function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
-    console.log(\`
-🔌 Plugin Template Generator
+    console.log(`\n🔌 Plugin Template Generator
 
 Usage: node create-plugin.js <template-type> <plugin-name> [options]
 
@@ -398,7 +397,7 @@ Examples:
   node create-plugin.js basic my-custom-plugin
   node create-plugin.js accessibility a11y-checker --author "Team"
   node create-plugin.js performance bundle-optimizer --description "Bundle size optimizer"
-\`);
+`);
     return;
   }
   
@@ -430,9 +429,9 @@ Examples:
     const result = await generatePlugin(templateType, pluginName, options);
     
     console.log('✅ Plugin generated successfully!');
-    console.log(\`📁 File: \${result.filePath}\`);
-    console.log(\`🔧 Template: \${result.template}\`);
-    console.log(\`📦 Plugin Name: \${result.pluginName}\`);
+    console.log(`📁 File: ${result.filePath}`);
+    console.log(`🔧 Template: ${result.template}`);
+    console.log(`📦 Plugin Name: ${result.pluginName}`);
     console.log('');
     console.log('Next steps:');
     console.log('1. Edit the generated plugin file to add your custom logic');
@@ -445,7 +444,7 @@ Examples:
   }
 }
 
-if (import.meta.url === \`file://\${process.argv[1]}\`) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 

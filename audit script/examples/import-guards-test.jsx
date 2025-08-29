@@ -5,7 +5,7 @@ import React from 'react'
 import { Box, Button, Typography } from '@mui/material'
 
 // ❌ BAD: Wildcard import - will trigger error
-import * from '@mui/icons-material'
+import * as AllIcons from '@mui/icons-material'
 
 // ❌ BAD: Default import with alias - will trigger error
 import Icons from '@mui/icons-material'

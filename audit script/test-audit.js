@@ -25,7 +25,7 @@ try {
   console.log('\n✅ Audit completed successfully!');
   
   // Check if reports were generated
-  if (existsSync(join(auditDir, 'report.json')) && existsSync(join(auditDir, 'REPORT.md')) {
+  if (existsSync(join(auditDir, 'report.json')) && existsSync(join(auditDir, 'REPORT.md'))) {
     console.log('📊 Reports generated successfully:');
     console.log('   - audit/report.json (machine-readable)');
     console.log('   - audit/REPORT.md (human-readable)');
