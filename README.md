@@ -9,6 +9,7 @@ A powerful toolkit that combines static analysis, runtime testing, and automated
 ## 🌟 Key Features
 
 ### 🔍 **Comprehensive Analysis**
+
 - **Static Code Analysis**: Pattern-based scanning for MUI best practices
 - **Runtime Performance Testing**: Lighthouse integration with PWA audits
 - **Accessibility Validation**: WCAG AA compliance checking
@@ -16,11 +17,13 @@ A powerful toolkit that combines static analysis, runtime testing, and automated
 - **Security Scanning**: XSS prevention and secure coding practices
 
 ### 🚀 **Dual Interface Options**
+
 - **🖥️ Web Application**: Modern React interface for repository auditing
 - **⚡ CLI Tool**: Command-line interface for development workflows
 - **🔄 GitHub Actions**: Automated CI/CD integration
 
 ### 📊 **Intelligent Reporting**
+
 - **Automated Grading**: A-F scoring with weighted categories
 - **Line-Level Precision**: Exact file and line issue reporting
 - **Multiple Formats**: JSON, HTML, and Markdown reports
@@ -88,7 +91,7 @@ nextjs-mui-audit-toolkit/
 **Modern interface for repository auditing with:**
 
 - **Repository URL Input**: Audit any GitHub repository
-- **Real-time Progress**: Live tracking of audit execution  
+- **Real-time Progress**: Live tracking of audit execution
 - **GitHub Integration**: Automatic workflow creation and execution
 - **Email Notifications**: Get notified when audits complete
 - **Results Dashboard**: View audit history and analytics
@@ -96,14 +99,14 @@ nextjs-mui-audit-toolkit/
 
 ### Web App Features
 
-| Feature | Description |
-|---------|-------------|
-| 🔗 **Repository Input** | Paste GitHub URL and start auditing |
-| 🔐 **Token Support** | Private repository access via GitHub tokens |
-| ⚡ **GitHub Actions** | Automated audit execution in the cloud |
-| 📧 **Email Alerts** | Completion notifications via email |
-| 📊 **Analytics** | Audit history and performance metrics |
-| 🎨 **Material-UI** | Beautiful, responsive interface |
+| Feature                 | Description                                 |
+| ----------------------- | ------------------------------------------- |
+| 🔗 **Repository Input** | Paste GitHub URL and start auditing         |
+| 🔐 **Token Support**    | Private repository access via GitHub tokens |
+| ⚡ **GitHub Actions**   | Automated audit execution in the cloud      |
+| 📧 **Email Alerts**     | Completion notifications via email          |
+| 📊 **Analytics**        | Audit history and performance metrics       |
+| 🎨 **Material-UI**      | Beautiful, responsive interface             |
 
 **Tech Stack**: Next.js 14, TypeScript, Material-UI v5, GitHub API
 
@@ -120,14 +123,14 @@ nextjs-mui-audit-toolkit/
 
 ### CLI Features
 
-| Feature | Description |
-|---------|-------------|
-| 📝 **Rule Engine** | 50+ custom rules for Next.js + MUI |
-| 🎯 **Grading System** | Automated A-F scoring |
-| 🔍 **Line Precision** | Exact file/line issue reporting |
-| 🚀 **Performance** | Core Web Vitals and bundle analysis |
-| ♿ **Accessibility** | WCAG AA compliance validation |
-| 🔒 **Security** | XSS prevention and secure patterns |
+| Feature               | Description                         |
+| --------------------- | ----------------------------------- |
+| 📝 **Rule Engine**    | 50+ custom rules for Next.js + MUI  |
+| 🎯 **Grading System** | Automated A-F scoring               |
+| 🔍 **Line Precision** | Exact file/line issue reporting     |
+| 🚀 **Performance**    | Core Web Vitals and bundle analysis |
+| ♿ **Accessibility**  | WCAG AA compliance validation       |
+| 🔒 **Security**       | XSS prevention and secure patterns  |
 
 **Tech Stack**: Node.js 18+, ESLint, Lighthouse, Playwright, Jest
 
@@ -202,7 +205,7 @@ module.exports = {
   rules: {
     'mui-imports': 'error',
     'theme-tokens': 'warn',
-    'accessibility': 'error'
+    accessibility: 'error'
   },
   performance: {
     budgets: {
@@ -212,7 +215,7 @@ module.exports = {
   output: {
     formats: ['json', 'html', 'markdown']
   }
-};
+}
 ```
 
 ## 🚀 Deployment
@@ -220,12 +223,14 @@ module.exports = {
 ### Web Application Deployment
 
 **Vercel (Recommended)**:
+
 ```bash
 cd webapp
 npx vercel --prod
 ```
 
 **Netlify**:
+
 ```bash
 cd webapp
 npm run build
@@ -233,6 +238,7 @@ netlify deploy --prod --dir=.next
 ```
 
 **Docker**:
+
 ```bash
 cd webapp
 docker build -t audit-webapp .
@@ -242,6 +248,7 @@ docker run -p 3000:3000 audit-webapp
 ### CLI Tool Usage
 
 **Local Development**:
+
 ```bash
 cd "audit script"
 npm install
@@ -249,6 +256,7 @@ npm run audit
 ```
 
 **CI/CD Integration**:
+
 ```bash
 # Add to your workflow
 - name: Audit Next.js + MUI
@@ -263,6 +271,7 @@ npm run audit
 **Complete documentation is organized by component:**
 
 ### 🔍 Quick Access
+
 - **[Documentation Index](./DOCUMENTATION.md)** - Master documentation guide
 - **[CLI Reference](./audit%20script/docs/CLI_REFERENCE.md)** - Command-line usage
 - **[API Reference](./webapp/docs/API_REFERENCE.md)** - Web API documentation
@@ -272,24 +281,28 @@ npm run audit
 ### 🎨 Component Documentation
 
 #### 🔧 Audit Script (CLI)
+
 **Location**: [`/audit script/docs/`](./audit%20script/docs/)
+
 - [CLI Reference](./audit%20script/docs/CLI_REFERENCE.md) - Complete command reference
 - [Configuration Guide](./audit%20script/docs/CONFIGURATION_GUIDE.md) - Setup and customization
 - [Plugin Development](./audit%20script/docs/PLUGIN_DEVELOPMENT.md) - Extending functionality
 
 #### 🌐 Web Application
+
 **Location**: [`/webapp/docs/`](./webapp/docs/)
+
 - [API Reference](./webapp/docs/API_REFERENCE.md) - REST API documentation
 - [GitHub App Setup](./webapp/docs/GITHUB_APP_SETUP.md) - Integration setup
 - [Deployment Guide](./webapp/docs/DEPLOYMENT_GUIDE.md) - Production deployment
 - [Implementation Summary](./webapp/docs/IMPLEMENTATION_SUMMARY.md) - Technical details
 
-| Document | Description |
-|----------|-------------|
-| [📖 Web App README](webapp/README.md) | Complete web application guide |
-| [⚡ CLI README](audit%20script/README.md) | Command-line tool documentation |
-| [🚀 Deployment Guide](DEPLOYMENT.md) | Comprehensive deployment instructions |
-| [🔧 Integration Guide](INTEGRATION_GUIDE.md) | CI/CD and workflow integration |
+| Document                                     | Description                           |
+| -------------------------------------------- | ------------------------------------- |
+| [📖 Web App README](webapp/README.md)        | Complete web application guide        |
+| [⚡ CLI README](audit%20script/README.md)    | Command-line tool documentation       |
+| [🚀 Deployment Guide](DEPLOYMENT.md)         | Comprehensive deployment instructions |
+| [🔧 Integration Guide](INTEGRATION_GUIDE.md) | CI/CD and workflow integration        |
 
 ## 🧪 Testing
 
@@ -330,7 +343,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - **Next.js Team** - Amazing React framework
-- **Material-UI Team** - Beautiful React components  
+- **Material-UI Team** - Beautiful React components
 - **GitHub** - Actions platform and API
 - **Vercel** - Excellent hosting platform
 - **Open Source Community** - Tools and inspiration
@@ -338,22 +351,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **🐛 Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)  
+- **💬 Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
 - **📧 Email**: support@your-domain.com
 - **📚 Documentation**: See individual README files
 
 ## 🌟 Features Comparison
 
-| Feature | Web App | CLI Tool | GitHub Actions |
-|---------|---------|----------|----------------|
-| **Repository Auditing** | ✅ | ✅ | ✅ |
-| **Real-time Progress** | ✅ | ⚡ | ✅ |
-| **Email Notifications** | ✅ | ❌ | ✅ |
-| **GitHub Integration** | ✅ | ⚡ | ✅ |
-| **Visual Dashboard** | ✅ | ❌ | ❌ |
-| **CI/CD Integration** | ⚡ | ✅ | ✅ |
-| **Offline Usage** | ❌ | ✅ | ❌ |
-| **Batch Processing** | ⚡ | ✅ | ✅ |
+| Feature                 | Web App | CLI Tool | GitHub Actions |
+| ----------------------- | ------- | -------- | -------------- |
+| **Repository Auditing** | ✅      | ✅       | ✅             |
+| **Real-time Progress**  | ✅      | ⚡       | ✅             |
+| **Email Notifications** | ✅      | ❌       | ✅             |
+| **GitHub Integration**  | ✅      | ⚡       | ✅             |
+| **Visual Dashboard**    | ✅      | ❌       | ❌             |
+| **CI/CD Integration**   | ⚡      | ✅       | ✅             |
+| **Offline Usage**       | ❌      | ✅       | ❌             |
+| **Batch Processing**    | ⚡      | ✅       | ✅             |
 
 **Legend**: ✅ Full Support | ⚡ Partial Support | ❌ Not Available
 
@@ -361,7 +374,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ by dev-mhany**
 
-*Automated auditing for Next.js + Material-UI projects*
+_Automated auditing for Next.js + Material-UI projects_
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)

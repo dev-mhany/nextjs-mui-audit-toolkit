@@ -213,22 +213,24 @@ Create `ecosystem.config.js`:
 
 ```javascript
 module.exports = {
-  apps: [{
-    name: 'audit-webapp',
-    script: 'npm',
-    args: 'start',
-    instances: 'max',
-    exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    env_production: {
-      NODE_ENV: 'production',
-      PORT: 3000
+  apps: [
+    {
+      name: 'audit-webapp',
+      script: 'npm',
+      args: 'start',
+      instances: 'max',
+      exec_mode: 'cluster',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      },
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      }
     }
-  }]
-};
+  ]
+}
 ```
 
 Start the application:
@@ -311,7 +313,7 @@ services:
   webapp:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - NODE_ENV=production
       - GITHUB_APP_ID=${GITHUB_APP_ID}
@@ -349,9 +351,9 @@ runtime: nodejs18
 
 env_variables:
   NODE_ENV: production
-  GITHUB_APP_ID: "your_app_id"
-  GITHUB_WEBHOOK_SECRET: "your_webhook_secret"
-  NEXTAUTH_URL: "https://your-project.appspot.com"
+  GITHUB_APP_ID: 'your_app_id'
+  GITHUB_WEBHOOK_SECRET: 'your_webhook_secret'
+  NEXTAUTH_URL: 'https://your-project.appspot.com'
 
 automatic_scaling:
   min_instances: 1
@@ -398,20 +400,22 @@ const securityHeaders = [
       font-src 'self';
       connect-src 'self' https://api.github.com;
       frame-src 'none';
-    `.replace(/\s{2,}/g, ' ').trim()
+    `
+      .replace(/\s{2,}/g, ' ')
+      .trim()
   }
-];
+]
 
 module.exports = {
   async headers() {
     return [
       {
         source: '/:path*',
-        headers: securityHeaders,
-      },
-    ];
-  },
-};
+        headers: securityHeaders
+      }
+    ]
+  }
+}
 ```
 
 ### Rate Limiting
@@ -426,12 +430,12 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   // Implement rate limiting logic
   const ip = request.ip ?? '127.0.0.1';
-  
+
   // Rate limit API endpoints
   if (request.nextUrl.pathname.startsWith('/api/')) {
     // Add rate limiting logic here
   }
-  
+
   return NextResponse.next();
 }
 ```
@@ -443,24 +447,24 @@ export function middleware(request: NextRequest) {
 Create `/api/health`:
 
 ```typescript
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
     // Check database connection
     // Check GitHub API connectivity
     // Check other dependencies
-    
+
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version
-    });
+    })
   } catch (error) {
     return NextResponse.json(
       { status: 'unhealthy', error: error.message },
       { status: 503 }
-    );
+    )
   }
 }
 ```
@@ -471,7 +475,7 @@ Configure structured logging:
 
 ```javascript
 // lib/logger.ts
-import winston from 'winston';
+import winston from 'winston'
 
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -485,7 +489,7 @@ export const logger = winston.createLogger({
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
     new winston.transports.File({ filename: 'combined.log' })
   ]
-});
+})
 ```
 
 ### Error Tracking
@@ -498,12 +502,12 @@ npm install @sentry/nextjs
 
 ```javascript
 // sentry.client.config.js
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from '@sentry/nextjs'
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-});
+  environment: process.env.NODE_ENV
+})
 ```
 
 ## Database Setup
@@ -563,12 +567,12 @@ sudo crontab -e
 // next.config.js
 module.exports = {
   images: {
-    domains: ['your-cdn-domain.com'],
+    domains: ['your-cdn-domain.com']
   },
   experimental: {
-    optimizeCss: true,
-  },
-};
+    optimizeCss: true
+  }
+}
 ```
 
 ### Caching
@@ -577,12 +581,12 @@ module.exports = {
 // Cache static assets
 const withPWA = require('next-pwa')({
   dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-});
+  disable: process.env.NODE_ENV === 'development'
+})
 
 module.exports = withPWA({
   // Next.js config
-});
+})
 ```
 
 ## Backup and Recovery
@@ -604,7 +608,7 @@ aws s3 cp "backup_${DATE}.tar.gz" s3://your-backup-bucket/
 name: Backup
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: '0 2 * * *' # Daily at 2 AM
 jobs:
   backup:
     runs-on: ubuntu-latest

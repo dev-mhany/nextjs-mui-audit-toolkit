@@ -10,14 +10,15 @@ The command-line audit tool for analyzing Next.js + MUI projects.
 
 **Location**: [`/audit script/docs/`](./audit%20script/docs/)
 
-| Document | Description |
-|----------|-------------|
-| [CLI Reference](./audit%20script/docs/CLI_REFERENCE.md) | Complete command-line reference and options |
+| Document                                                            | Description                                 |
+| ------------------------------------------------------------------- | ------------------------------------------- |
+| [CLI Reference](./audit%20script/docs/CLI_REFERENCE.md)             | Complete command-line reference and options |
 | [Configuration Guide](./audit%20script/docs/CONFIGURATION_GUIDE.md) | Detailed configuration options and examples |
-| [Plugin Development](./audit%20script/docs/PLUGIN_DEVELOPMENT.md) | Guide to creating custom plugins |
-| [README](./audit%20script/README.md) | Main documentation and quick start |
+| [Plugin Development](./audit%20script/docs/PLUGIN_DEVELOPMENT.md)   | Guide to creating custom plugins            |
+| [README](./audit%20script/README.md)                                | Main documentation and quick start          |
 
 **Quick Start**:
+
 ```bash
 npx nextjs-mui-audit run --ci --min-score 85
 ```
@@ -28,15 +29,16 @@ The web interface for triggering audits via GitHub App integration.
 
 **Location**: [`/webapp/docs/`](./webapp/docs/)
 
-| Document | Description |
-|----------|-------------|
-| [API Reference](./webapp/docs/API_REFERENCE.md) | Complete API documentation and endpoints |
-| [GitHub App Setup](./webapp/docs/GITHUB_APP_SETUP.md) | GitHub App installation and configuration |
-| [Deployment Guide](./webapp/docs/DEPLOYMENT_GUIDE.md) | Production deployment instructions |
-| [Implementation Summary](./webapp/docs/IMPLEMENTATION_SUMMARY.md) | Technical implementation details |
-| [README](./webapp/README.md) | Main documentation and quick start |
+| Document                                                          | Description                               |
+| ----------------------------------------------------------------- | ----------------------------------------- |
+| [API Reference](./webapp/docs/API_REFERENCE.md)                   | Complete API documentation and endpoints  |
+| [GitHub App Setup](./webapp/docs/GITHUB_APP_SETUP.md)             | GitHub App installation and configuration |
+| [Deployment Guide](./webapp/docs/DEPLOYMENT_GUIDE.md)             | Production deployment instructions        |
+| [Implementation Summary](./webapp/docs/IMPLEMENTATION_SUMMARY.md) | Technical implementation details          |
+| [README](./webapp/README.md)                                      | Main documentation and quick start        |
 
 **Quick Start**:
+
 ```bash
 cd webapp
 npm install
@@ -80,27 +82,32 @@ npm run dev
 ### By Topic
 
 #### Installation & Setup
+
 - [CLI Installation](./audit%20script/README.md#installation)
 - [Webapp Setup](./webapp/README.md#quick-start)
 - [GitHub App Configuration](./webapp/docs/GITHUB_APP_SETUP.md)
 - [Environment Variables](./webapp/docs/GITHUB_APP_SETUP.md#environment-configuration)
 
 #### Configuration
+
 - [CLI Configuration](./audit%20script/docs/CONFIGURATION_GUIDE.md)
 - [Custom Rules](./audit%20script/docs/CONFIGURATION_GUIDE.md#custom-rules)
 - [Plugin System](./audit%20script/docs/CONFIGURATION_GUIDE.md#plugin-system)
 
 #### Usage & Examples
+
 - [CLI Examples](./audit%20script/docs/CLI_REFERENCE.md#examples)
 - [API Usage](./webapp/docs/API_REFERENCE.md#sdk-usage-examples)
 - [CI/CD Integration](./audit%20script/docs/CLI_REFERENCE.md#cicd-integration)
 
 #### Deployment & Production
+
 - [Webapp Deployment](./webapp/docs/DEPLOYMENT_GUIDE.md)
 - [Production Configuration](./webapp/docs/DEPLOYMENT_GUIDE.md#environment-configuration)
 - [Security Setup](./webapp/docs/DEPLOYMENT_GUIDE.md#security-configuration)
 
 #### Development & Extension
+
 - [Plugin Development](./audit%20script/docs/PLUGIN_DEVELOPMENT.md)
 - [API Reference](./webapp/docs/API_REFERENCE.md)
 - [Implementation Details](./webapp/docs/IMPLEMENTATION_SUMMARY.md)
@@ -108,21 +115,25 @@ npm run dev
 ### By User Type
 
 #### DevOps Engineers
+
 - [CLI Reference](./audit%20script/docs/CLI_REFERENCE.md) - CI/CD integration
 - [Deployment Guide](./webapp/docs/DEPLOYMENT_GUIDE.md) - Production setup
 - [Configuration](./audit%20script/docs/CONFIGURATION_GUIDE.md) - Environment setup
 
 #### Frontend Developers
+
 - [CLI Usage](./audit%20script/README.md) - Local development
 - [Custom Rules](./audit%20script/docs/CONFIGURATION_GUIDE.md#custom-rules) - Project-specific rules
 - [Plugin Development](./audit%20script/docs/PLUGIN_DEVELOPMENT.md) - Extensibility
 
 #### Team Leads
+
 - [GitHub App Setup](./webapp/docs/GITHUB_APP_SETUP.md) - Team integration
 - [API Reference](./webapp/docs/API_REFERENCE.md) - Automation
 - [Implementation Summary](./webapp/docs/IMPLEMENTATION_SUMMARY.md) - Technical overview
 
 #### System Administrators
+
 - [Deployment Guide](./webapp/docs/DEPLOYMENT_GUIDE.md) - Infrastructure
 - [Security Configuration](./webapp/docs/DEPLOYMENT_GUIDE.md#security-configuration) - Security setup
 - [Monitoring](./webapp/docs/DEPLOYMENT_GUIDE.md#monitoring-and-observability) - Operations

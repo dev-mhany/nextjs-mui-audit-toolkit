@@ -1,111 +1,135 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { githubService } from '@/lib/github';
-import { db } from '@/lib/database';
-import { validateCreateAuditRequest } from '@/lib/validation';
-import { withErrorHandler, logger, performanceMonitor, gitHubCircuitBreaker } from '@/lib/error-handling';
-import type { CreateAuditRequest } from '@/types/audit';
+import { NextRequest, NextResponse } from 'next/server'
+import { githubService } from '@/lib/github'
+import { db } from '@/lib/database'
+import { validateCreateAuditRequest } from '@/lib/validation'
+import {
+  withErrorHandler,
+  logger,
+  performanceMonitor,
+  gitHubCircuitBreaker
+} from '@/lib/error-handling'
+import type { CreateAuditRequest } from '@/types/audit'
 
 // Force Node.js runtime for this API route
-export const runtime = 'nodejs';
+export const runtime = 'nodejs'
 
 export const POST = withErrorHandler(async function POST(request: NextRequest) {
-  const endTimer = performanceMonitor.startTimer('create_audit');
-  
+  const endTimer = performanceMonitor.startTimer('create_audit')
+
   try {
     // Parse and validate request body
-    const rawBody = await request.json();
-    const body: CreateAuditRequest = validateCreateAuditRequest(rawBody);
-    
+    const rawBody = await request.json()
+    const body: CreateAuditRequest = validateCreateAuditRequest(rawBody)
+
     // Parse repository URL
-    const { owner, repo } = parseRepoUrl(body.repoUrl);
-    
+    const { owner, repo } = parseRepoUrl(body.repoUrl)
+
     // Create audit record in database
     const auditRecord = await db.createAudit({
       repoUrl: body.repoUrl,
       branch: 'main', // Default branch, could be made configurable
       mode: body.mode,
       status: 'queued',
-      userEmail: body.userEmail,
-    });
+      userEmail: body.userEmail
+    })
 
     logger.info('Audit creation started', {
       auditId: auditRecord.id,
       repoUrl: body.repoUrl,
       mode: body.mode,
       owner,
-      repo,
-    });
+      repo
+    })
 
-    let triggerResult: { success: boolean; runId?: number; error?: string };
+    let triggerResult: { success: boolean; runId?: number; error?: string }
 
     if (body.mode === 'app') {
       // Use GitHub App flow (preferred)
-      triggerResult = await triggerAuditViaApp(owner, repo, auditRecord.id, body.options, body.userEmail);
+      triggerResult = await triggerAuditViaApp(
+        owner,
+        repo,
+        auditRecord.id,
+        body.options,
+        body.userEmail
+      )
     } else if (body.mode === 'pat' && body.pat) {
       // Use Personal Access Token flow (fallback with warnings)
       logger.warn('Using PAT flow - recommend GitHub App for better security', {
         auditId: auditRecord.id,
-        repoUrl: body.repoUrl,
-      });
-      triggerResult = await triggerAuditViaPAT(owner, repo, body.pat, auditRecord.id, body.options, body.userEmail);
+        repoUrl: body.repoUrl
+      })
+      triggerResult = await triggerAuditViaPAT(
+        owner,
+        repo,
+        body.pat,
+        auditRecord.id,
+        body.options,
+        body.userEmail
+      )
     } else {
-      throw new Error('Invalid authentication mode or missing PAT');
+      throw new Error('Invalid authentication mode or missing PAT')
     }
 
     if (!triggerResult.success) {
       await db.updateAudit(auditRecord.id, {
         status: 'failed',
-        error: triggerResult.error,
-      });
-      throw new Error(`Failed to trigger audit: ${triggerResult.error}`);
+        error: triggerResult.error
+      })
+      throw new Error(`Failed to trigger audit: ${triggerResult.error}`)
     }
 
     // Update audit record with run details
     await db.updateAudit(auditRecord.id, {
       status: 'running',
       workflowRunId: triggerResult.runId?.toString(),
-      prUrl: (triggerResult as any).prUrl,
-    });
+      prUrl: (triggerResult as any).prUrl
+    })
 
-    endTimer();
+    endTimer()
 
     return NextResponse.json({
       success: true,
       runId: triggerResult.runId,
       prUrl: (triggerResult as any).prUrl,
       auditId: auditRecord.id,
-      message: 'Audit triggered successfully',
-    });
-
+      message: 'Audit triggered successfully'
+    })
   } catch (error: unknown) {
-    endTimer();
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    endTimer()
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Failed to create audit', {
-      error: errorMessage,
-    });
-    
+      error: errorMessage
+    })
+
     return NextResponse.json(
       { error: 'Failed to create audit', details: errorMessage },
       { status: 500 }
-    );
+    )
   }
-});
+})
 
-async function triggerAuditViaApp(owner: string, repo: string, auditId: string, options?: Record<string, unknown>, userEmail?: string) {
+async function triggerAuditViaApp(
+  owner: string,
+  repo: string,
+  auditId: string,
+  options?: Record<string, unknown>,
+  userEmail?: string
+) {
   try {
     // Get GitHub App installation for this repository
-    const installation = await githubService.getInstallation(owner, repo);
-    
+    const installation = await githubService.getInstallation(owner, repo)
+
     if (!installation) {
       return {
         success: false,
-        error: 'GitHub App not installed for this repository. Please install the app first.',
-      };
+        error:
+          'GitHub App not installed for this repository. Please install the app first.'
+      }
     }
 
     // Create short-lived token using the installation
-    const appToken = await githubService.createInstallationToken(installation.id);
-    
+    const appToken = await githubService.createInstallationToken(installation.id)
+
     // Trigger reusable workflow via repository dispatch
     const dispatch = await githubService.triggerRepositoryDispatch(
       owner,
@@ -115,41 +139,47 @@ async function triggerAuditViaApp(owner: string, repo: string, auditId: string, 
         audit_id: auditId,
         ref: 'HEAD',
         audit_config: buildAuditConfig(options),
-        user_email: userEmail || null,
+        user_email: userEmail || null
       },
       appToken
-    );
+    )
 
     return {
       success: true,
       runId: dispatch.runId,
-      prUrl: null, // Will be available later when PR is created
-    };
-
+      prUrl: null // Will be available later when PR is created
+    }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('GitHub App audit trigger failed', {
       owner,
       repo,
       auditId,
-      error: errorMessage,
-    });
-    
+      error: errorMessage
+    })
+
     return {
       success: false,
-      error: errorMessage,
-    };
+      error: errorMessage
+    }
   }
 }
 
-async function triggerAuditViaPAT(owner: string, repo: string, pat: string, auditId: string, options?: Record<string, unknown>, userEmail?: string) {
+async function triggerAuditViaPAT(
+  owner: string,
+  repo: string,
+  pat: string,
+  auditId: string,
+  options?: Record<string, unknown>,
+  userEmail?: string
+) {
   try {
     // Validate PAT has minimal required scopes
-    const github = new (githubService.constructor as any)(pat);
-    
+    const github = new (githubService.constructor as any)(pat)
+
     // Check repository access
-    await github.validateRepository(`https://github.com/${owner}/${repo}`, pat);
-    
+    await github.validateRepository(`https://github.com/${owner}/${repo}`, pat)
+
     // Trigger repository dispatch with PAT
     const dispatch = await github.triggerRepositoryDispatch(
       owner,
@@ -159,54 +189,53 @@ async function triggerAuditViaPAT(owner: string, repo: string, pat: string, audi
         audit_id: auditId,
         ref: 'HEAD',
         audit_config: buildAuditConfig(options),
-        user_email: userEmail || null,
+        user_email: userEmail || null
       },
       pat
-    );
+    )
 
     return {
       success: true,
       runId: dispatch.runId,
-      prUrl: null,
-    };
-
+      prUrl: null
+    }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('PAT audit trigger failed', {
       owner,
       repo,
       auditId,
-      error: errorMessage,
-    });
-    
+      error: errorMessage
+    })
+
     return {
       success: false,
-      error: errorMessage,
-    };
+      error: errorMessage
+    }
   }
 }
 
 function parseRepoUrl(repoUrl: string): { owner: string; repo: string } {
-  const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/)
   if (!match) {
-    throw new Error('Invalid GitHub repository URL');
+    throw new Error('Invalid GitHub repository URL')
   }
   return {
     owner: match[1],
-    repo: match[2].replace(/\.git$/, ''),
-  };
+    repo: match[2].replace(/\.git$/, '')
+  }
 }
 
 function buildAuditConfig(options?: Record<string, unknown>) {
-  const cfg: Record<string, unknown> = {};
-  if (!options || typeof options !== 'object') return cfg;
-  if (typeof options.staticOnly === 'boolean') cfg.staticOnly = options.staticOnly;
-  if (typeof options.createPR === 'boolean') cfg.createPR = options.createPR;
-  if (typeof options.autoMerge === 'boolean') cfg.autoMerge = options.autoMerge;
-  if (typeof options.fix === 'boolean') cfg.fix = options.fix;
-  if (typeof options.minScore === 'number') cfg.minScore = options.minScore;
-  if (typeof options.appPath === 'string') cfg.appPath = options.appPath;
-  return cfg;
+  const cfg: Record<string, unknown> = {}
+  if (!options || typeof options !== 'object') return cfg
+  if (typeof options.staticOnly === 'boolean') cfg.staticOnly = options.staticOnly
+  if (typeof options.createPR === 'boolean') cfg.createPR = options.createPR
+  if (typeof options.autoMerge === 'boolean') cfg.autoMerge = options.autoMerge
+  if (typeof options.fix === 'boolean') cfg.fix = options.fix
+  if (typeof options.minScore === 'number') cfg.minScore = options.minScore
+  if (typeof options.appPath === 'string') cfg.appPath = options.appPath
+  return cfg
 }
 
 export async function GET() {
@@ -215,9 +244,9 @@ export async function GET() {
     usage: 'POST to this endpoint with { repoUrl, mode: "app"|"pat", pat?: string }',
     modes: {
       app: 'Preferred: Uses GitHub App with fine-grained permissions',
-      pat: 'Fallback: Uses Personal Access Token (warn user about security)',
+      pat: 'Fallback: Uses Personal Access Token (warn user about security)'
     },
     returns: '{ runId, prUrl?, auditId }',
-    security: 'GitHub App tokens are short-lived and never stored',
-  });
+    security: 'GitHub App tokens are short-lived and never stored'
+  })
 }

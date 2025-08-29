@@ -19,13 +19,7 @@ module.exports = {
     },
     project: './tsconfig.json'
   },
-  plugins: [
-    '@typescript-eslint',
-    'jsx-a11y',
-    'react',
-    'react-hooks',
-    'unused-imports'
-  ],
+  plugins: ['@typescript-eslint', 'jsx-a11y', 'react', 'react-hooks', 'unused-imports'],
   env: {
     browser: true,
     es2021: true,
@@ -84,14 +78,7 @@ module.exports = {
     'import/order': [
       'error',
       {
-        groups: [
-          'builtin',
-          'external',
-          'internal',
-          'parent',
-          'sibling',
-          'index'
-        ],
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
         'newlines-between': 'always',
         alphabetize: {
           order: 'asc',
@@ -137,9 +124,9 @@ module.exports = {
     'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
     'eol-last': 'error',
     'comma-dangle': ['error', 'never'],
-    'semi': ['error', 'never'],
-    'quotes': ['error', 'single'],
-    'indent': ['error', 2],
+    semi: ['error', 'never'],
+    quotes: ['error', 'single'],
+    indent: ['error', 2],
     'max-len': ['warn', { code: 100, ignoreUrls: true }]
   },
   overrides: [
@@ -156,4 +143,4 @@ module.exports = {
       }
     }
   ]
-};
+}

@@ -1,58 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { emailService } from '@/lib/email';
-import { withErrorHandler, logger } from '@/lib/error-handling';
-import type { AuditResult } from '@/types/audit';
+import { NextRequest, NextResponse } from 'next/server'
+import { emailService } from '@/lib/email'
+import { withErrorHandler, logger } from '@/lib/error-handling'
+import type { AuditResult } from '@/types/audit'
 
 export const POST = withErrorHandler(async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { to, auditResult, templateType = 'completion' } = body;
-    
+    const body = await request.json()
+    const { to, auditResult, templateType = 'completion' } = body
+
     if (!to || !auditResult) {
       return NextResponse.json(
         { error: 'Missing required fields: to, auditResult' },
         { status: 400 }
-      );
+      )
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(to)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
     if (!emailService) {
       logger.warn('Email service not configured - skipping notification', {
         recipientEmail: to,
-        auditId: auditResult.id,
-      });
-      
+        auditId: auditResult.id
+      })
+
       return NextResponse.json({
         success: false,
         error: 'Email service not configured',
-        message: 'Email notifications are currently disabled due to missing configuration',
-      });
+        message: 'Email notifications are currently disabled due to missing configuration'
+      })
     }
 
-    let emailResult;
-    
+    let emailResult
+
     switch (templateType) {
       case 'completion':
-        emailResult = await emailService.sendAuditCompletionEmail(to, auditResult);
-        break;
-        
+        emailResult = await emailService.sendAuditCompletionEmail(to, auditResult)
+        break
+
       case 'failure':
-        emailResult = await emailService.sendAuditFailureEmail(to, auditResult);
-        break;
-        
+        emailResult = await emailService.sendAuditFailureEmail(to, auditResult)
+        break
+
       default:
         return NextResponse.json(
           { error: `Unknown template type: ${templateType}` },
           { status: 400 }
-        );
+        )
     }
 
     if (emailResult.success) {
@@ -60,44 +57,43 @@ export const POST = withErrorHandler(async function POST(request: NextRequest) {
         recipientEmail: to,
         auditId: auditResult.id,
         templateType,
-        messageId: emailResult.messageId,
-      });
-      
+        messageId: emailResult.messageId
+      })
+
       return NextResponse.json({
         success: true,
         messageId: emailResult.messageId,
-        message: 'Email notification sent successfully',
-      });
+        message: 'Email notification sent successfully'
+      })
     } else {
       logger.error('Failed to send email notification', {
         recipientEmail: to,
         auditId: auditResult.id,
         templateType,
-        error: emailResult.error,
-      });
-      
+        error: emailResult.error
+      })
+
       return NextResponse.json(
         {
           success: false,
           error: emailResult.error,
-          message: 'Failed to send email notification',
+          message: 'Failed to send email notification'
         },
         { status: 500 }
-      );
+      )
     }
-
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Email notification API error', {
-      error: errorMessage,
-    });
-    
+      error: errorMessage
+    })
+
     return NextResponse.json(
       { error: 'Internal server error', details: errorMessage },
       { status: 500 }
-    );
+    )
   }
-});
+})
 
 // Test endpoint for email service verification
 export const GET = withErrorHandler(async function GET(request: NextRequest) {
@@ -108,34 +104,33 @@ export const GET = withErrorHandler(async function GET(request: NextRequest) {
       requiredVars: [
         'EMAIL_PROVIDER',
         'EMAIL_HOST (for SMTP)',
-        'EMAIL_PORT (for SMTP)', 
+        'EMAIL_PORT (for SMTP)',
         'EMAIL_USER (for SMTP)',
         'EMAIL_PASS (for SMTP)',
         'EMAIL_API_KEY (for SendGrid/others)',
         'EMAIL_FROM_ADDRESS',
-        'EMAIL_FROM_NAME',
-      ],
-    });
+        'EMAIL_FROM_NAME'
+      ]
+    })
   }
 
   try {
-    const verification = await emailService.verifyConnection();
-    
+    const verification = await emailService.verifyConnection()
+
     return NextResponse.json({
       configured: true,
       connectionVerified: verification.success,
       error: verification.error,
-      message: verification.success 
+      message: verification.success
         ? 'Email service is properly configured and connection verified'
-        : `Email service configured but connection failed: ${verification.error}`,
-    });
-    
+        : `Email service configured but connection failed: ${verification.error}`
+    })
   } catch (error: any) {
     return NextResponse.json({
       configured: true,
       connectionVerified: false,
       error: error.message,
-      message: 'Email service configured but verification failed',
-    });
+      message: 'Email service configured but verification failed'
+    })
   }
-});
+})

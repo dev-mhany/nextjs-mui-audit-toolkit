@@ -40,6 +40,7 @@ npx vercel --prod
 Before deploying, ensure you have:
 
 ### Required
+
 - **Node.js 18+** - Runtime environment
 - **GitHub Account** - For repository hosting and Actions
 - **GitHub Personal Access Token** - For API access
@@ -47,6 +48,7 @@ Before deploying, ensure you have:
   - Create at: https://github.com/settings/tokens
 
 ### Optional (but recommended)
+
 - **Vercel Account** - For hosting (free tier available)
 - **Email Provider** - For audit notifications (Gmail, SendGrid, etc.)
 - **Domain Name** - For custom URL
@@ -97,6 +99,7 @@ Vercel provides the best Next.js deployment experience with zero configuration.
 #### Method 1: GitHub Integration (Recommended)
 
 1. **Connect Repository**
+
    ```bash
    # Push your code to GitHub
    git add .
@@ -124,11 +127,13 @@ Vercel provides the best Next.js deployment experience with zero configuration.
 #### Method 2: CLI Deployment
 
 1. **Install Vercel CLI**
+
    ```bash
    npm install -g vercel
    ```
 
 2. **Deploy**
+
    ```bash
    cd webapp
    vercel --prod
@@ -144,11 +149,13 @@ Vercel provides the best Next.js deployment experience with zero configuration.
 ### Netlify
 
 1. **Install Netlify CLI**
+
    ```bash
    npm install -g netlify-cli
    ```
 
 2. **Build and Deploy**
+
    ```bash
    cd webapp
    npm run build
@@ -162,12 +169,14 @@ Vercel provides the best Next.js deployment experience with zero configuration.
 ### AWS Amplify
 
 1. **Install Amplify CLI**
+
    ```bash
    npm install -g @aws-amplify/cli
    amplify configure
    ```
 
 2. **Initialize and Deploy**
+
    ```bash
    cd webapp
    amplify init
@@ -182,16 +191,17 @@ Vercel provides the best Next.js deployment experience with zero configuration.
 ### Docker Container
 
 1. **Create Dockerfile**
+
    ```dockerfile
    FROM node:18-alpine
-   
+
    WORKDIR /app
    COPY package*.json ./
    RUN npm ci --only=production
-   
+
    COPY . .
    RUN npm run build
-   
+
    EXPOSE 3000
    CMD ["npm", "start"]
    ```
@@ -234,14 +244,15 @@ WEBAPP_WEBHOOK_URL    # Your deployed app URL (e.g., https://your-app.vercel.app
 ### Setup Instructions
 
 1. **Get Vercel Tokens**
+
    ```bash
    # Install Vercel CLI
    npm install -g vercel
-   
+
    # Login and get tokens
    vercel login
    vercel link
-   
+
    # Get organization and project IDs
    cat .vercel/project.json
    ```
@@ -282,11 +293,13 @@ If you need GitHub to call your app directly:
 ### 3. Custom Domain (Optional)
 
 #### Vercel
+
 ```bash
 vercel domains add your-domain.com
 ```
 
 #### Netlify
+
 - Dashboard → Domain Management → Add Custom Domain
 
 ### 4. SSL Certificate
@@ -294,6 +307,7 @@ vercel domains add your-domain.com
 Most platforms (Vercel, Netlify, Amplify) provide automatic SSL.
 
 For custom setups:
+
 ```bash
 # Using Certbot for Let's Encrypt
 certbot --nginx -d your-domain.com
@@ -338,6 +352,7 @@ Monitor key metrics:
 ### Regular Maintenance
 
 1. **Update Dependencies**
+
    ```bash
    npm update
    npm audit fix
@@ -349,10 +364,11 @@ Monitor key metrics:
    - Watch for failed audits
 
 3. **Security Updates**
+
    ```bash
    # Check for vulnerabilities
    npm audit
-   
+
    # Update GitHub token if needed
    # Rotate webhook secrets periodically
    ```
@@ -366,6 +382,7 @@ Monitor key metrics:
 **Error**: `Module not found` or TypeScript errors
 
 **Solution**:
+
 ```bash
 # Clear cache and reinstall
 rm -rf node_modules package-lock.json .next
@@ -378,6 +395,7 @@ npm run build
 **Error**: `GITHUB_TOKEN is undefined`
 
 **Solutions**:
+
 - Verify environment variables are set in deployment platform
 - Check variable names (case-sensitive)
 - Restart the application after adding variables
@@ -387,6 +405,7 @@ npm run build
 **Error**: `API rate limit exceeded`
 
 **Solutions**:
+
 - Use authenticated GitHub token
 - Implement rate limiting in application
 - Consider using GitHub Apps for higher limits
@@ -396,6 +415,7 @@ npm run build
 **Error**: `Email service connection failed`
 
 **Solutions**:
+
 ```bash
 # Test email configuration
 curl -X GET https://your-app-domain.com/api/email/test
@@ -410,6 +430,7 @@ curl -X GET https://your-app-domain.com/api/email/test
 **Error**: `Invalid webhook signature`
 
 **Solutions**:
+
 - Verify `GITHUB_WEBHOOK_SECRET` matches in both places
 - Check webhook payload format
 - Ensure secret is properly configured
@@ -434,17 +455,19 @@ For additional support:
    - Docker: `docker logs container-name`
 
 2. **Verify Configuration**
+
    ```bash
    # Check environment variables
    curl https://your-app-domain.com/api/config/status
    ```
 
 3. **Test Components Individually**
+
    ```bash
    # Test GitHub API
    curl -H "Authorization: token $GITHUB_TOKEN" \
      https://api.github.com/user
-   
+
    # Test email service
    curl -X POST https://your-app-domain.com/api/email/test \
      -H "Content-Type: application/json" \
@@ -452,13 +475,14 @@ For additional support:
    ```
 
 4. **Common Deployment Commands**
+
    ```bash
    # Redeploy (Vercel)
    vercel --prod
-   
+
    # Check deployment status
    vercel ls
-   
+
    # View logs
    vercel logs your-deployment-url
    ```
@@ -484,6 +508,7 @@ For additional support:
 This deployment creates a complete auditing system that automatically processes repositories, runs comprehensive audits via GitHub Actions, and provides real-time feedback through a modern web interface.
 
 The system is designed to be:
+
 - **Scalable**: Uses GitHub Actions for processing
 - **Secure**: Implements proper authentication and validation
 - **Reliable**: Includes error handling and monitoring

@@ -5,24 +5,28 @@ This document summarizes the implementation of the enhanced product flow for the
 ## 🎯 Key Objectives Achieved
 
 ### 1. ✅ GitHub App Integration (Tight & Safe)
+
 - **Replaced PAT-first approach** with GitHub App as the preferred method
 - **Fine-grained permissions** per repository (contents: write, pull_requests: write, checks: write)
 - **Short-lived tokens** via GitHub Actions (no long-term storage)
 - **Least-privilege security** model with revocable access
 
 ### 2. ✅ PR-Based Audit Results
+
 - **No direct branch pushes** - all results go through Pull Requests
 - **Compatible with branch protection** rules and organization policies
 - **Audit branch pattern**: `chore/audit-YYYYMMDD-HHMMSS`
 - **Rich PR descriptions** with grade summaries and artifact links
 
 ### 3. ✅ Enhanced CLI Integration
+
 - **New flags added**: `--ci`, `--no-runtime`, `--smoke`
 - **Proper exit codes**: 0 (pass), 1 (score < min), 2 (criticals), 3 (error)
 - **Machine-readable JSON output** for CI/CD pipelines
 - **Static analysis mode** for untrusted repositories
 
 ### 4. ✅ Reusable Workflow Architecture
+
 - **Infrastructure workflow**: `.github/workflows/audit-reusable.yml`
 - **Target repository workflow**: `.github/workflows/run-audit.yml`
 - **Repository dispatch events** for triggering across repos
@@ -33,6 +37,7 @@ This document summarizes the implementation of the enhanced product flow for the
 ### Frontend/API Contract
 
 #### `/api/create-audit` (POST)
+
 ```typescript
 // Request
 {
@@ -57,6 +62,7 @@ This document summarizes the implementation of the enhanced product flow for the
 ```
 
 #### `/api/audit-status` (GET)
+
 ```typescript
 // Query: ?runId=...
 // Response
@@ -69,42 +75,46 @@ This document summarizes the implementation of the enhanced product flow for the
 ```
 
 #### `/api/auth/github/callback` (GET/POST)
+
 - **GET**: Handles GitHub App installation redirects
 - **POST**: Processes webhook events (installation, PR, check_run, workflow_run)
 
 ### Database Schema Extensions
 
 #### GitHub Installations
+
 ```typescript
 interface GitHubInstallation {
-  id: string;
-  installationId: number;
-  accountType: string;
-  accountLogin: string;
-  repositorySelection: string;
-  permissions: Record<string, string>;
-  setupAction?: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  installationId: number
+  accountType: string
+  accountLogin: string
+  repositorySelection: string
+  permissions: Record<string, string>
+  setupAction?: string
+  createdAt: string
+  updatedAt: string
 }
 ```
 
 #### Enhanced Audit Results
+
 ```typescript
 interface AuditResult {
   // ... existing fields
-  mode?: 'app' | 'pat';
-  prUrl?: string;
-  prNumber?: number;
-  prState?: string;
-  checkRunUrl?: string;
-  artifacts?: Record<string, any>;
+  mode?: 'app' | 'pat'
+  prUrl?: string
+  prNumber?: number
+  prState?: string
+  checkRunUrl?: string
+  artifacts?: Record<string, any>
 }
 ```
 
 ## 🔧 Components Implemented
 
 ### 1. **ImprovedAuditForm.tsx**
+
 - **Dual authentication modes** (GitHub App vs PAT)
 - **Real-time cost/time estimation** based on options
 - **GitHub App installation flow** integration
@@ -112,6 +122,7 @@ interface AuditResult {
 - **Email notification setup**
 
 ### 2. **GitHub Service Extensions**
+
 - `getInstallation()` - Check app installation status
 - `createInstallationToken()` - Generate short-lived tokens
 - `triggerRepositoryDispatch()` - Trigger workflows via events
@@ -120,18 +131,21 @@ interface AuditResult {
 - `getWorkflowArtifacts()` - Retrieve audit reports
 
 ### 3. **Database Service Extensions**
+
 - Installation management (store, get, remove, update)
 - Enhanced audit tracking with workflow run IDs
 - PR URL and status tracking
 - Artifact metadata storage
 
 ### 4. **Validation & Security**
+
 - Enhanced input sanitization for new request types
 - GitHub token pattern validation (classic and fine-grained)
 - Webhook signature verification
 - CSRF and XSS protection
 
 ### 5. **Authentication Flow Pages**
+
 - `/auth/success` - GitHub App installation success page
 - `/auth/error` - Installation error handling
 - Automatic redirect back to audit form
@@ -139,6 +153,7 @@ interface AuditResult {
 ## 🔄 Workflow Implementation
 
 ### Reusable Workflow (Infrastructure)
+
 ```yaml
 name: Next.js+MUI Audit (Reusable)
 on:
@@ -150,12 +165,14 @@ on:
 ```
 
 **Features:**
+
 - GitHub App token generation via `actions/create-github-app-token`
 - Repository dispatch to target repositories
 - Configurable audit parameters
 - Error handling and logging
 
 ### Target Repository Workflow
+
 ```yaml
 name: Dev-Mhany Audit
 on:
@@ -165,6 +182,7 @@ on:
 ```
 
 **Features:**
+
 - **Security-first**: Static analysis only by default
 - **Branch-based results**: Creates `chore/audit-*` branches
 - **PR automation**: Auto-creates PRs with rich descriptions
@@ -175,15 +193,17 @@ on:
 ## 🔐 Security Implementation
 
 ### 1. **Least Privilege Permissions**
+
 ```yaml
 permissions:
-  contents: write      # For audit branch creation
+  contents: write # For audit branch creation
   pull-requests: write # For PR creation and comments
-  checks: write        # For status summaries
-  metadata: read       # For basic repo info
+  checks: write # For status summaries
+  metadata: read # For basic repo info
 ```
 
 ### 2. **Sandboxing & Isolation**
+
 - **GitHub-hosted runners only** (no self-hosted)
 - **Static analysis by default** (no code execution)
 - **Runtime audits behind opt-in** flag
@@ -191,6 +211,7 @@ permissions:
 - **Secret redaction in logs**
 
 ### 3. **Token Management**
+
 - **Short-lived installation tokens** (1 hour max)
 - **No PAT storage** (used immediately and discarded)
 - **Webhook signature verification**
@@ -199,6 +220,7 @@ permissions:
 ## 📊 CLI Enhancements
 
 ### New Flags Added
+
 ```bash
 --ci          # CI mode: machine-readable output + exit codes
 --no-runtime  # Static analysis only (no code execution)
@@ -206,12 +228,14 @@ permissions:
 ```
 
 ### Exit Code Standards
+
 - **0**: Audit passed all checks
 - **1**: Score below minimum threshold
 - **2**: Critical issues found (strict mode)
 - **3**: Internal error or execution failure
 
 ### CI Output Format
+
 ```json
 {
   "grade": "B+",
@@ -220,14 +244,19 @@ permissions:
   "totalIssues": 12,
   "duration": 45230,
   "passed": true,
-  "categories": { /* ... */ },
-  "thresholds": { /* ... */ }
+  "categories": {
+    /* ... */
+  },
+  "thresholds": {
+    /* ... */
+  }
 }
 ```
 
 ## 🚀 Deployment Considerations
 
 ### Environment Variables Required
+
 ```env
 # GitHub App Configuration
 GITHUB_APP_ID=123456
@@ -245,6 +274,7 @@ NEXTAUTH_SECRET=your_secret_here
 ```
 
 ### GitHub App Setup Steps
+
 1. Create GitHub App with required permissions
 2. Generate and securely store private key
 3. Configure webhook endpoint
@@ -255,18 +285,21 @@ NEXTAUTH_SECRET=your_secret_here
 ## 🧪 Testing Strategy
 
 ### Unit Tests Required
+
 - GitHub service methods
 - Database operations
 - Validation functions
 - Webhook processing
 
 ### Integration Tests
+
 - GitHub App installation flow
 - Workflow triggering
 - PR creation and updates
 - Status polling
 
 ### E2E Tests
+
 - Complete audit flow from UI
 - GitHub App vs PAT modes
 - Error handling scenarios
@@ -275,6 +308,7 @@ NEXTAUTH_SECRET=your_secret_here
 ## 📈 Monitoring & Observability
 
 ### Key Metrics to Track
+
 - GitHub App installation success rate
 - Workflow execution times
 - Audit completion rates
@@ -282,6 +316,7 @@ NEXTAUTH_SECRET=your_secret_here
 - API rate limit usage
 
 ### Logging Implementation
+
 - Structured logging with correlation IDs
 - Security event tracking
 - Performance metrics
@@ -291,12 +326,14 @@ NEXTAUTH_SECRET=your_secret_here
 ## 🔄 Migration Path
 
 ### For Existing Users
+
 1. **Gradual rollout**: Both PAT and GitHub App modes available
 2. **User education**: Clear benefits communication
 3. **Fallback support**: PAT mode remains functional
 4. **Migration incentives**: Better UX with GitHub App
 
 ### For New Users
+
 1. **GitHub App first**: Default recommendation
 2. **Clear setup guide**: Step-by-step instructions
 3. **Troubleshooting docs**: Common issues and solutions

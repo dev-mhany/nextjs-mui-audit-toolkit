@@ -23,7 +23,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
@@ -53,38 +53,38 @@ jobs:
         id: audit
         run: |
           echo "🚀 Starting comprehensive audit..."
-          
+
           # Create audit results directory
           mkdir -p audit-results
-          
+
           # Parse audit configuration
           AUDIT_CONFIG='${{ github.event.inputs.audit_config }}'
-          
+
           # Build audit command with configuration
           AUDIT_CMD="npx nextjs-mui-audit-toolkit run --output ./audit-results"
-          
+
           # Add configuration flags based on input
           if echo "$AUDIT_CONFIG" | jq -e '.fix' >/dev/null 2>&1; then
             if [ "$(echo "$AUDIT_CONFIG" | jq -r '.fix')" = "true" ]; then
               AUDIT_CMD="$AUDIT_CMD --fix"
             fi
           fi
-          
+
           if echo "$AUDIT_CONFIG" | jq -e '.strict' >/dev/null 2>&1; then
             if [ "$(echo "$AUDIT_CONFIG" | jq -r '.strict')" = "true" ]; then
               AUDIT_CMD="$AUDIT_CMD --strict"
             fi
           fi
-          
+
           if echo "$AUDIT_CONFIG" | jq -e '.minScore' >/dev/null 2>&1; then
             MIN_SCORE=$(echo "$AUDIT_CONFIG" | jq -r '.minScore')
             AUDIT_CMD="$AUDIT_CMD --min-score $MIN_SCORE"
           fi
-          
+
           # Run the audit
           echo "Executing: $AUDIT_CMD"
           eval $AUDIT_CMD
-          
+
           # Extract score from report for status
           if [ -f "audit-results/report.json" ]; then
             SCORE=$(jq -r '.grades.overallScore // 0' audit-results/report.json)
@@ -108,7 +108,7 @@ jobs:
           echo "**Branch:** ${{ github.ref_name }}" >> audit-summary.md
           echo "**Timestamp:** $(date -u)" >> audit-summary.md
           echo "" >> audit-summary.md
-          
+
           if [ -f "audit-results/report.json" ]; then
             echo "**Overall Score:** ${{ steps.audit.outputs.AUDIT_SCORE }}/100 (Grade: ${{ steps.audit.outputs.AUDIT_GRADE }})" >> audit-summary.md
             echo "**Critical Issues:** ${{ steps.audit.outputs.CRITICAL_ISSUES }}" >> audit-summary.md
@@ -118,7 +118,7 @@ jobs:
           else
             echo "❌ **Status:** Audit failed to generate report" >> audit-summary.md
           fi
-          
+
           echo "" >> audit-summary.md
           echo "---" >> audit-summary.md
           echo "*Automated audit by [dev-mhany](https://github.com/dev-mhany) using Next.js + MUI Audit Toolkit*" >> audit-summary.md
@@ -127,10 +127,10 @@ jobs:
         run: |
           git config --local user.email "audit-bot@dev-mhany.com"
           git config --local user.name "dev-mhany audit bot"
-          
+
           # Add all audit files
           git add audit-results/ audit-summary.md
-          
+
           # Check if there are changes to commit
           if [ -n "$(git status --porcelain)" ]; then
             # Create commit message with audit details
@@ -167,7 +167,7 @@ jobs:
         run: |
           # Prepare webhook payload
           WEBHOOK_PAYLOAD='{"audit_id":"${{ github.event.inputs.audit_id }}","status":"'"${{ job.status }}"'","workflow_run_id":${{ github.run_id }},"repository":"${{ github.repository }}"'
-          
+
           # Add results if audit completed successfully
           if [ "${{ job.status }}" = "success" ] && [ -f "audit-results/report.json" ]; then
             SCORE="${{ steps.audit.outputs.AUDIT_SCORE }}"
@@ -176,14 +176,14 @@ jobs:
             
             WEBHOOK_PAYLOAD='{"audit_id":"${{ github.event.inputs.audit_id }}","status":"completed","workflow_run_id":${{ github.run_id }},"repository":"${{ github.repository }}","results":{"score":'"$SCORE"',"grade":"'"$GRADE"'","critical_issues":'"$CRITICAL_ISSUES"',"completed_at":"'"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"'"}}'
           fi
-          
+
           # Add error information if failed
           if [ "${{ job.status }}" = "failure" ]; then
             WEBHOOK_PAYLOAD='{"audit_id":"${{ github.event.inputs.audit_id }}","status":"failure","workflow_run_id":${{ github.run_id }},"repository":"${{ github.repository }}","error":"Audit workflow failed","failure_reason":"See workflow logs for details"}'
           fi
-          
+
           echo "Webhook payload: $WEBHOOK_PAYLOAD"
-          
+
           # Call webhook endpoint if configured
           if [ -n "${{ vars.WEBAPP_WEBHOOK_URL }}" ]; then
             curl -X POST "${{ vars.WEBAPP_WEBHOOK_URL }}/api/audit/webhook" \
@@ -198,7 +198,7 @@ jobs:
           else
             echo "WEBAPP_WEBHOOK_URL not configured, skipping webhook notification"
           fi
-          
+
           echo "✅ Audit workflow completed with status: ${{ job.status }}"
 
       - name: 💬 Create PR comment (optional)
@@ -209,16 +209,16 @@ jobs:
             const score = '${{ steps.audit.outputs.AUDIT_SCORE }}' || 'N/A';
             const grade = '${{ steps.audit.outputs.AUDIT_GRADE }}' || 'N/A';
             const criticalIssues = '${{ steps.audit.outputs.CRITICAL_ISSUES }}' || '0';
-            
+
             const comment = `## 🔍 Next.js + MUI Audit Results
-            
+
             **Overall Score:** ${score}/100 (Grade: ${grade})
             **Critical Issues:** ${criticalIssues}
-            
+
             📄 **[View Full Report](../audit-results/REPORT.html)**
-            
+
             *Automated audit by [dev-mhany](https://github.com/dev-mhany)*`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -230,7 +230,7 @@ jobs:
         if: failure()
         run: |
           echo "Audit workflow failed"
-          
+
           # Create failure summary
           echo "## ❌ Audit Failed" > audit-failure.md
           echo "" >> audit-failure.md
@@ -242,14 +242,14 @@ jobs:
           echo "**Timestamp:** $(date -u)" >> audit-failure.md
           echo "" >> audit-failure.md
           echo "Please check the workflow logs for detailed error information." >> audit-failure.md
-          
+
           # Commit failure notice
           git config --local user.email "audit-bot@dev-mhany.com"
           git config --local user.name "dev-mhany audit bot"
           git add audit-failure.md
           git commit -m "❌ Audit failed - $(date -u)" || true
           git push || true
-          
+
           # Notify webapp of failure if configured
           if [ -n "${{ github.event.inputs.audit_id }}" ] && [ -n "${{ vars.WEBAPP_WEBHOOK_URL }}" ]; then
             FAILURE_PAYLOAD='{"audit_id":"${{ github.event.inputs.audit_id }}","status":"failure","workflow_run_id":${{ github.run_id }},"repository":"${{ github.repository }}","error":"Audit workflow failed","failure_reason":"Workflow execution failed - see logs for details"}'

@@ -10,7 +10,7 @@ describe('AutoFixer', () => {
 
   beforeEach(async () => {
     autoFixer = new AutoFixer()
-    
+
     // Create test directory
     testDir = join(process.cwd(), 'test-temp-auto-fixer')
     await mkdir(testDir, { recursive: true })
@@ -42,9 +42,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'mui/inline-styles', line: 6, column: 10 }
-      ]
+      const issues = [{ rule: 'mui/inline-styles', line: 6, column: 10 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 
@@ -74,9 +72,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'next/image-usage', line: 6, column: 6 }
-      ]
+      const issues = [{ rule: 'next/image-usage', line: 6, column: 6 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 
@@ -84,7 +80,7 @@ export default function TestComponent() {
       expect(result.appliedFixes).toHaveLength(1)
 
       const fixedContent = await readFile(testFile, 'utf8')
-      expect(fixedContent).toContain('import Image from \'next/image\'')
+      expect(fixedContent).toContain("import Image from 'next/image'")
       expect(fixedContent).toContain('<Image')
       expect(fixedContent).toContain('width={500} height={300}')
     })
@@ -107,9 +103,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'a11y/alt-text', line: 7, column: 6 }
-      ]
+      const issues = [{ rule: 'a11y/alt-text', line: 7, column: 6 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 
@@ -141,9 +135,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'mui/theme-token-enforcement', line: 7, column: 6 }
-      ]
+      const issues = [{ rule: 'mui/theme-token-enforcement', line: 7, column: 6 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 
@@ -178,9 +170,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'mui/responsive-design', line: 7, column: 6 }
-      ]
+      const issues = [{ rule: 'mui/responsive-design', line: 7, column: 6 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 
@@ -208,9 +198,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'mui/inline-styles', line: 6, column: 10 }
-      ]
+      const issues = [{ rule: 'mui/inline-styles', line: 6, column: 10 }]
 
       const result = await autoFixer.fixFile(testFile, issues, { dryRun: true })
 
@@ -241,9 +229,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'mui/inline-styles', line: 6, column: 10 }
-      ]
+      const issues = [{ rule: 'mui/inline-styles', line: 6, column: 10 }]
 
       await autoFixer.fixFile(testFile, issues, { backup: true })
 
@@ -305,7 +291,7 @@ export default function Component2() {
       const fixed2 = await readFile(file2, 'utf8')
 
       expect(fixed1).toContain('sx={{')
-      expect(fixed2).toContain('import Image from \'next/image\'')
+      expect(fixed2).toContain("import Image from 'next/image'")
       expect(fixed2).toContain('alt=""')
     })
   })
@@ -336,9 +322,7 @@ export default function TestComponent() {
 `
       await writeFile(testFile, content)
 
-      const issues = [
-        { rule: 'next/head-usage', line: 7, column: 6 }
-      ]
+      const issues = [{ rule: 'next/head-usage', line: 7, column: 6 }]
 
       const result = await autoFixer.fixFile(testFile, issues)
 

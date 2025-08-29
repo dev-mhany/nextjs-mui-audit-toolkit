@@ -192,7 +192,7 @@ program
   .command('env')
   .description('Validate environment configuration')
   .option('--fix', 'attempt to fix common environment issues', false)
-  .action(async (options) => {
+  .action(async options => {
     try {
       await validateEnvironment(options)
     } catch (error) {
@@ -452,13 +452,13 @@ async function showVersion(options) {
 
 async function validateEnvironment(options) {
   console.log(chalk.blue('\n🔍 Environment Validation\n'))
-  
+
   // Run the built-in environment check
   const envCheck = checkAuditEnvironment()
-  
+
   if (options.fix) {
     console.log(chalk.yellow('\n🔧 Attempting to fix environment issues...'))
-    
+
     // Check if .env file exists
     if (!existsSync('.env')) {
       console.log('Creating .env template...')
@@ -466,11 +466,11 @@ async function validateEnvironment(options) {
       await writeFile('.env', generateEnvTemplate())
       console.log(chalk.green('✓ .env template created'))
     }
-    
+
     // Additional fixes can be added here
     console.log(chalk.blue('\nPlease edit .env file with your actual values'))
   }
-  
+
   console.log(chalk.green('\n✅ Environment validation complete'))
 }
 
@@ -592,7 +592,9 @@ async function runComprehensiveAudit(options) {
 
   try {
     // Parse format options
-    const formats = options.format ? options.format.split(',').map(f => f.trim()) : ['json', 'markdown', 'html']
+    const formats = options.format
+      ? options.format.split(',').map(f => f.trim())
+      : ['json', 'markdown', 'html']
 
     // Step 1: Environment check
     if (!isCI) {
@@ -620,7 +622,7 @@ async function runComprehensiveAudit(options) {
     if (options.strict !== undefined) config.thresholds.failOnCritical = options.strict
     if (options.output) config.output.directory = options.output
     if (options.verbose) config.output.verbose = true
-    
+
     // Set output formats
     config.output.formats = formats
 
@@ -701,7 +703,9 @@ async function runComprehensiveAudit(options) {
 
     const grades = await calculateGrades(combinedResults)
     if (!isCI) {
-      console.log(chalk.green(`✓ Overall Score: ${grades.overallScore}/100 (${grades.letterGrade})`))
+      console.log(
+        chalk.green(`✓ Overall Score: ${grades.overallScore}/100 (${grades.letterGrade})`)
+      )
     }
 
     // Step 9: Auto-fix if requested
@@ -766,8 +770,9 @@ async function runComprehensiveAudit(options) {
         grade: grades.letterGrade,
         criticalIssues: grades.criticalIssues,
         totalIssues: grades.totalIssues,
-        passed: grades.overallScore >= config.thresholds.minScore && 
-               (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
+        passed:
+          grades.overallScore >= config.thresholds.minScore &&
+          (!config.thresholds.failOnCritical || grades.criticalIssues === 0),
         reports: {
           directory: config.output.directory,
           formats: formats

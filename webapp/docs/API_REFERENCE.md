@@ -25,15 +25,15 @@ Creates a new audit for a GitHub repository.
 
 ```typescript
 interface CreateAuditRequest {
-  repoUrl: string;                    // GitHub repository URL
-  mode: 'app' | 'pat';               // Authentication mode
-  pat?: string;                      // Required if mode is 'pat'
-  userEmail?: string;                // Optional email for notifications
+  repoUrl: string // GitHub repository URL
+  mode: 'app' | 'pat' // Authentication mode
+  pat?: string // Required if mode is 'pat'
+  userEmail?: string // Optional email for notifications
   options?: {
-    createPR?: boolean;              // Create PR with results (default: true)
-    staticOnly?: boolean;            // Static analysis only (default: true)
-    autoMerge?: boolean;             // Auto-merge on pass (default: false)
-  };
+    createPR?: boolean // Create PR with results (default: true)
+    staticOnly?: boolean // Static analysis only (default: true)
+    autoMerge?: boolean // Auto-merge on pass (default: false)
+  }
 }
 ```
 
@@ -56,11 +56,11 @@ interface CreateAuditRequest {
 
 ```typescript
 interface CreateAuditResponse {
-  success: boolean;
-  runId?: number;                    // GitHub workflow run ID
-  prUrl?: string;                    // Pull request URL (available later)
-  auditId: string;                   // Internal audit ID
-  message: string;                   // Status message
+  success: boolean
+  runId?: number // GitHub workflow run ID
+  prUrl?: string // Pull request URL (available later)
+  auditId: string // Internal audit ID
+  message: string // Status message
 }
 ```
 
@@ -103,9 +103,9 @@ Gets the current status of an audit.
 
 #### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `runId` | string | Yes | GitHub workflow run ID |
+| Parameter | Type   | Required | Description            |
+| --------- | ------ | -------- | ---------------------- |
+| `runId`   | string | Yes      | GitHub workflow run ID |
 
 #### Example Request
 
@@ -117,15 +117,15 @@ GET /api/audit-status?runId=1234567890
 
 ```typescript
 interface AuditStatusResponse {
-  state: 'queued' | 'running' | 'completed' | 'failed';
-  grade?: string;                    // Letter grade (A-F)
-  prUrl?: string;                    // Pull request URL
-  artifacts?: Record<string, any>;   // Audit artifacts
-  auditId: string;                   // Internal audit ID
-  repoUrl: string;                   // Repository URL
-  createdAt: string;                 // ISO timestamp
-  updatedAt: string;                 // ISO timestamp
-  error?: string;                    // Error message if failed
+  state: 'queued' | 'running' | 'completed' | 'failed'
+  grade?: string // Letter grade (A-F)
+  prUrl?: string // Pull request URL
+  artifacts?: Record<string, any> // Audit artifacts
+  auditId: string // Internal audit ID
+  repoUrl: string // Repository URL
+  createdAt: string // ISO timestamp
+  updatedAt: string // ISO timestamp
+  error?: string // Error message if failed
 }
 ```
 
@@ -160,10 +160,10 @@ Processes GitHub App installation redirects.
 
 ##### Query Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `installation_id` | string | Yes | GitHub installation ID |
-| `setup_action` | string | No | Installation action |
+| Parameter         | Type   | Required | Description            |
+| ----------------- | ------ | -------- | ---------------------- |
+| `installation_id` | string | Yes      | GitHub installation ID |
+| `setup_action`    | string | No       | Installation action    |
 
 ##### Response
 
@@ -175,10 +175,10 @@ Processes GitHub webhook events.
 
 ##### Headers
 
-| Header | Type | Required | Description |
-|--------|------|----------|-------------|
-| `x-hub-signature-256` | string | Yes | Webhook signature |
-| `x-github-event` | string | Yes | Event type |
+| Header                | Type   | Required | Description       |
+| --------------------- | ------ | -------- | ----------------- |
+| `x-hub-signature-256` | string | Yes      | Webhook signature |
+| `x-github-event`      | string | Yes      | Event type        |
 
 ##### Supported Events
 
@@ -202,47 +202,47 @@ Gets detailed information about a specific audit.
 
 #### Parameters
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | string | Yes | Audit ID |
+| Parameter | Type   | Required | Description |
+| --------- | ------ | -------- | ----------- |
+| `id`      | string | Yes      | Audit ID    |
 
 #### Response
 
 ```typescript
 interface AuditDetailResponse {
-  id: string;
-  repoUrl: string;
-  branch: string;
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'queued';
-  mode?: 'app' | 'pat';
-  score?: number;                    // Overall score (0-100)
-  letterGrade?: string;              // Letter grade (A-F)
-  criticalIssues?: number;           // Number of critical issues
-  createdAt: string;
-  updatedAt?: string;
-  completedAt?: string;
-  reportUrl?: string;
-  workflowRunId?: string;
-  error?: string;
-  userEmail?: string;
-  prUrl?: string;
-  prNumber?: number;
-  prState?: string;
-  checkRunUrl?: string;
-  artifacts?: Record<string, any>;
+  id: string
+  repoUrl: string
+  branch: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'queued'
+  mode?: 'app' | 'pat'
+  score?: number // Overall score (0-100)
+  letterGrade?: string // Letter grade (A-F)
+  criticalIssues?: number // Number of critical issues
+  createdAt: string
+  updatedAt?: string
+  completedAt?: string
+  reportUrl?: string
+  workflowRunId?: string
+  error?: string
+  userEmail?: string
+  prUrl?: string
+  prNumber?: number
+  prState?: string
+  checkRunUrl?: string
+  artifacts?: Record<string, any>
   githubWorkflow?: {
-    id: number;
-    status: string;
-    conclusion: string | null;
-    html_url: string;
-    created_at: string;
-    updated_at: string;
-  };
+    id: number
+    status: string
+    conclusion: string | null
+    html_url: string
+    created_at: string
+    updated_at: string
+  }
   progress?: {
-    percentage: number;
-    step: string;
-    estimatedTimeRemaining?: string;
-  };
+    percentage: number
+    step: string
+    estimatedTimeRemaining?: string
+  }
 }
 ```
 
@@ -254,24 +254,24 @@ All API errors follow this format:
 
 ```typescript
 interface ApiError {
-  error: string;                     // Main error message
-  details?: string;                  // Additional details
-  code?: string;                     // Error code
-  field?: string;                    // Field that caused error (validation)
+  error: string // Main error message
+  details?: string // Additional details
+  code?: string // Error code
+  field?: string // Field that caused error (validation)
 }
 ```
 
 ### HTTP Status Codes
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 200 | OK | Request successful |
-| 400 | Bad Request | Invalid request data |
-| 401 | Unauthorized | Authentication failed |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
+| Code | Meaning               | Description              |
+| ---- | --------------------- | ------------------------ |
+| 200  | OK                    | Request successful       |
+| 400  | Bad Request           | Invalid request data     |
+| 401  | Unauthorized          | Authentication failed    |
+| 403  | Forbidden             | Insufficient permissions |
+| 404  | Not Found             | Resource not found       |
+| 429  | Too Many Requests     | Rate limit exceeded      |
+| 500  | Internal Server Error | Server error             |
 
 ### Common Error Scenarios
 
@@ -307,10 +307,10 @@ interface ApiError {
 
 ## Rate Limits
 
-| Endpoint | Limit | Window |
-|----------|-------|--------|
-| `/api/create-audit` | 10 requests | 1 minute |
-| `/api/audit-status` | 60 requests | 1 minute |
+| Endpoint                    | Limit        | Window   |
+| --------------------------- | ------------ | -------- |
+| `/api/create-audit`         | 10 requests  | 1 minute |
+| `/api/audit-status`         | 60 requests  | 1 minute |
 | `/api/auth/github/callback` | 100 requests | 1 minute |
 
 ## Webhooks
@@ -365,11 +365,11 @@ POST https://your-domain.com/api/auth/github/callback
 All webhooks are verified using HMAC-SHA256 signatures:
 
 ```typescript
-const signature = request.headers['x-hub-signature-256'];
-const payload = request.body;
-const secret = process.env.GITHUB_WEBHOOK_SECRET;
+const signature = request.headers['x-hub-signature-256']
+const payload = request.body
+const secret = process.env.GITHUB_WEBHOOK_SECRET
 
-const isValid = verifySignature(payload, signature, secret);
+const isValid = verifySignature(payload, signature, secret)
 ```
 
 ## SDK Usage Examples
@@ -377,14 +377,14 @@ const isValid = verifySignature(payload, signature, secret);
 ### JavaScript/TypeScript
 
 ```typescript
-import fetch from 'node-fetch';
+import fetch from 'node-fetch'
 
 // Create audit
 const createAudit = async (repoUrl: string, userEmail?: string) => {
   const response = await fetch('/api/create-audit', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       repoUrl,
@@ -395,26 +395,26 @@ const createAudit = async (repoUrl: string, userEmail?: string) => {
         staticOnly: true,
         autoMerge: false
       }
-    }),
-  });
-  
+    })
+  })
+
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`HTTP error! status: ${response.status}`)
   }
-  
-  return await response.json();
-};
+
+  return await response.json()
+}
 
 // Check audit status
 const checkAuditStatus = async (runId: string) => {
-  const response = await fetch(`/api/audit-status?runId=${runId}`);
-  
+  const response = await fetch(`/api/audit-status?runId=${runId}`)
+
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    throw new Error(`HTTP error! status: ${response.status}`)
   }
-  
-  return await response.json();
-};
+
+  return await response.json()
+}
 ```
 
 ### curl Examples

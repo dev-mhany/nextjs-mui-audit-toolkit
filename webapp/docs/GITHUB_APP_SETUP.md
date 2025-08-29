@@ -5,6 +5,7 @@ This guide explains how to set up the GitHub App integration for the dev-mhany a
 ## Benefits of GitHub App vs PAT
 
 ### ✅ GitHub App (Recommended)
+
 - **Fine-grained permissions** per repository
 - **Short-lived tokens** (no long-term storage)
 - **Works with SSO** and branch protection
@@ -12,6 +13,7 @@ This guide explains how to set up the GitHub App integration for the dev-mhany a
 - **Better audit trail** and security
 
 ### ⚠️ Personal Access Token (Fallback)
+
 - Requires broad repository access
 - Token stored during audit execution
 - May not work with SSO restrictions
@@ -28,11 +30,13 @@ This guide explains how to set up the GitHub App integration for the dev-mhany a
 ### 2. Configure GitHub App Settings
 
 #### Basic Information
+
 - **GitHub App name**: `dev-mhany-audit-toolkit`
 - **Description**: `Automated Next.js + MUI audit toolkit for best practices analysis`
 - **Homepage URL**: `https://your-domain.com`
 
 #### Webhook
+
 - **Webhook URL**: `https://your-domain.com/api/auth/github/callback`
 - **Webhook secret**: Generate a random secret and save it
 - **Active**: ✅ Checked
@@ -40,6 +44,7 @@ This guide explains how to set up the GitHub App integration for the dev-mhany a
 #### Permissions
 
 Set the following **Repository permissions**:
+
 - **Contents**: Read & Write (for creating audit reports)
 - **Pull requests**: Write (for creating PRs with audit results)
 - **Checks**: Write (for posting check run summaries)
@@ -47,6 +52,7 @@ Set the following **Repository permissions**:
 - **Actions**: Read (for monitoring workflow status)
 
 #### Subscribe to events
+
 - ✅ **Installation**
 - ✅ **Installation repositories**
 - ✅ **Pull request**
@@ -54,6 +60,7 @@ Set the following **Repository permissions**:
 - ✅ **Workflow run**
 
 #### Where can this GitHub App be installed?
+
 - **Any account** (recommended for public use)
 - **Only on this account** (for private/testing)
 
@@ -82,12 +89,14 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
 ### 5. Install the App
 
 #### For Testing
+
 1. Go to your GitHub App settings
 2. Click **Install App** in the sidebar
 3. Select repositories or install on all repositories
 4. Complete the installation
 
 #### For Users
+
 1. Share your GitHub App installation URL:
    `https://github.com/apps/dev-mhany-audit-toolkit/installations/new`
 2. Users can install it on their repositories
@@ -95,6 +104,7 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
 ## Usage Flow
 
 ### 1. User Experience
+
 1. User visits your audit website
 2. Enters repository URL
 3. Selects "GitHub App" authentication mode
@@ -103,6 +113,7 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
 6. Returns to your site to start audit
 
 ### 2. Technical Flow
+
 1. User selects GitHub App mode
 2. System checks if app is installed on target repository
 3. If installed:
@@ -115,6 +126,7 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
    - User installs app and returns
 
 ### 3. Audit Execution
+
 1. Repository dispatch triggers `run-audit.yml` workflow
 2. Workflow runs static analysis (secure, no code execution)
 3. Generates audit reports in `/audit` directory
@@ -125,9 +137,11 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret_here
 ## Workflow Files
 
 ### Reusable Workflow (Your Infrastructure)
+
 `.github/workflows/audit-reusable.yml` - Triggers audits on target repositories
 
 ### Target Repository Workflow
+
 `.github/workflows/run-audit.yml` - Executes the actual audit
 
 Users need to add this workflow to their repositories, or it can be created automatically during the first audit.
@@ -135,6 +149,7 @@ Users need to add this workflow to their repositories, or it can be created auto
 ## Security Considerations
 
 ### Safe by Design
+
 - **Static analysis only** by default
 - **No code execution** on PRs from forks
 - **Sandboxed environment** in GitHub Actions
@@ -142,12 +157,14 @@ Users need to add this workflow to their repositories, or it can be created auto
 - **Input validation** and sanitization
 
 ### Branch Protection Compatibility
+
 - Creates audit branch instead of pushing to main
 - PRs work with branch protection rules
 - Auto-merge only with explicit label
 - Respects existing workflows and checks
 
 ### Secret Management
+
 - No long-term token storage
 - Installation tokens expire automatically
 - Webhook signature verification
@@ -156,7 +173,9 @@ Users need to add this workflow to their repositories, or it can be created auto
 ## Monitoring and Troubleshooting
 
 ### Webhook Events
+
 Monitor webhook deliveries in your GitHub App settings:
+
 - Installation events
 - Repository access changes
 - Pull request updates
@@ -165,16 +184,19 @@ Monitor webhook deliveries in your GitHub App settings:
 ### Common Issues
 
 #### "App not installed" Error
+
 - User hasn't installed the app on their repository
 - Check installation permissions
 - Verify app has access to target repository
 
 #### "Permission denied" Error
+
 - App permissions might be insufficient
 - Check repository access in app installation
 - Verify organization settings allow third-party apps
 
 #### Webhook Not Receiving Events
+
 - Check webhook URL is accessible
 - Verify webhook secret matches
 - Check firewall/proxy settings
@@ -182,6 +204,7 @@ Monitor webhook deliveries in your GitHub App settings:
 ### Debugging
 
 Enable debug logging:
+
 ```env
 LOG_LEVEL=debug
 NODE_ENV=development

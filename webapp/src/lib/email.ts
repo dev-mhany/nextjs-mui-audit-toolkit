@@ -1,34 +1,34 @@
-import nodemailer from 'nodemailer';
-import type { AuditResult } from '@/types/audit';
-import { logger } from '@/lib/error-handling';
+import nodemailer from 'nodemailer'
+import type { AuditResult } from '@/types/audit'
+import { logger } from '@/lib/error-handling'
 
 export interface EmailConfig {
-  provider: 'smtp' | 'sendgrid' | 'mailgun' | 'resend';
-  host?: string;
-  port?: number;
-  secure?: boolean;
+  provider: 'smtp' | 'sendgrid' | 'mailgun' | 'resend'
+  host?: string
+  port?: number
+  secure?: boolean
   auth?: {
-    user: string;
-    pass: string;
-  };
-  apiKey?: string;
-  fromEmail: string;
-  fromName: string;
+    user: string
+    pass: string
+  }
+  apiKey?: string
+  fromEmail: string
+  fromName: string
 }
 
 export interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
+  subject: string
+  html: string
+  text: string
 }
 
 export class EmailService {
-  private transporter: nodemailer.Transporter | null = null;
-  private config: EmailConfig;
+  private transporter: nodemailer.Transporter | null = null
+  private config: EmailConfig
 
   constructor(config: EmailConfig) {
-    this.config = config;
-    this.initializeTransporter();
+    this.config = config
+    this.initializeTransporter()
   }
 
   private initializeTransporter(): void {
@@ -39,43 +39,42 @@ export class EmailService {
             host: this.config.host!,
             port: this.config.port || 587,
             secure: this.config.secure || false,
-            auth: this.config.auth,
-          });
-          break;
-          
+            auth: this.config.auth
+          })
+          break
+
         case 'sendgrid':
           this.transporter = nodemailer.createTransport({
             service: 'SendGrid',
             auth: {
               user: 'apikey',
-              pass: this.config.apiKey!,
-            },
-          });
-          break;
-          
+              pass: this.config.apiKey!
+            }
+          })
+          break
+
         case 'mailgun':
           // Mailgun configuration would go here
-          throw new Error('Mailgun provider not implemented yet');
-          
+          throw new Error('Mailgun provider not implemented yet')
+
         case 'resend':
           // Resend configuration would go here
-          throw new Error('Resend provider not implemented yet');
-          
+          throw new Error('Resend provider not implemented yet')
+
         default:
-          throw new Error(`Unsupported email provider: ${this.config.provider}`);
+          throw new Error(`Unsupported email provider: ${this.config.provider}`)
       }
-      
+
       logger.info('Email service initialized', {
         provider: this.config.provider,
-        host: this.config.host,
-      });
-      
+        host: this.config.host
+      })
     } catch (error: unknown) {
       logger.error('Failed to initialize email service', {
         provider: this.config.provider,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
+        error: error instanceof Error ? error.message : String(error)
+      })
+      throw error
     }
   }
 
@@ -89,46 +88,45 @@ export class EmailService {
     if (!this.transporter) {
       return {
         success: false,
-        error: 'Email service not properly initialized',
-      };
+        error: 'Email service not properly initialized'
+      }
     }
 
     try {
-      const template = this.generateAuditCompletionTemplate(auditResult);
-      
+      const template = this.generateAuditCompletionTemplate(auditResult)
+
       const mailOptions = {
         from: `"${this.config.fromName}" <${this.config.fromEmail}>`,
         to: recipientEmail,
         subject: template.subject,
         html: template.html,
-        text: template.text,
-      };
+        text: template.text
+      }
 
-      const result = await this.transporter.sendMail(mailOptions);
-      
+      const result = await this.transporter.sendMail(mailOptions)
+
       logger.info('Audit completion email sent', {
         auditId: auditResult.id,
         recipientEmail,
         messageId: result.messageId,
-        score: auditResult.score,
-      });
+        score: auditResult.score
+      })
 
       return {
         success: true,
-        messageId: result.messageId,
-      };
-      
+        messageId: result.messageId
+      }
     } catch (error: any) {
       logger.error('Failed to send audit completion email', {
         auditId: auditResult.id,
         recipientEmail,
-        error: error.message,
-      });
-      
+        error: error.message
+      })
+
       return {
         success: false,
-        error: error.message,
-      };
+        error: error.message
+      }
     }
   }
 
@@ -142,46 +140,45 @@ export class EmailService {
     if (!this.transporter) {
       return {
         success: false,
-        error: 'Email service not properly initialized',
-      };
+        error: 'Email service not properly initialized'
+      }
     }
 
     try {
-      const template = this.generateAuditFailureTemplate(auditResult);
-      
+      const template = this.generateAuditFailureTemplate(auditResult)
+
       const mailOptions = {
         from: `"${this.config.fromName}" <${this.config.fromEmail}>`,
         to: recipientEmail,
         subject: template.subject,
         html: template.html,
-        text: template.text,
-      };
+        text: template.text
+      }
 
-      const result = await this.transporter.sendMail(mailOptions);
-      
+      const result = await this.transporter.sendMail(mailOptions)
+
       logger.warn('Audit failure email sent', {
         auditId: auditResult.id,
         recipientEmail,
         messageId: result.messageId,
-        error: auditResult.error,
-      });
+        error: auditResult.error
+      })
 
       return {
         success: true,
-        messageId: result.messageId,
-      };
-      
+        messageId: result.messageId
+      }
     } catch (error: any) {
       logger.error('Failed to send audit failure email', {
         auditId: auditResult.id,
         recipientEmail,
-        error: error.message,
-      });
-      
+        error: error.message
+      })
+
       return {
         success: false,
-        error: error.message,
-      };
+        error: error.message
+      }
     }
   }
 
@@ -189,11 +186,11 @@ export class EmailService {
    * Generate email template for successful audit completion
    */
   private generateAuditCompletionTemplate(auditResult: AuditResult): EmailTemplate {
-    const gradeColor = this.getGradeColor(auditResult.letterGrade);
-    const scoreColor = this.getScoreColor(auditResult.score);
-    
-    const subject = `🔍 Audit Complete: ${auditResult.repoUrl} - Grade ${auditResult.letterGrade || 'N/A'}`;
-    
+    const gradeColor = this.getGradeColor(auditResult.letterGrade)
+    const scoreColor = this.getScoreColor(auditResult.score)
+
+    const subject = `🔍 Audit Complete: ${auditResult.repoUrl} - Grade ${auditResult.letterGrade || 'N/A'}`
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -268,8 +265,8 @@ export class EmailService {
         </div>
       </body>
       </html>
-    `;
-    
+    `
+
     const text = `
 🔍 Audit Completed
 
@@ -288,17 +285,17 @@ ${auditResult.workflowRunId ? `View Workflow: https://github.com/${this.extractR
 
 ---
 Automated audit by dev-mhany using Next.js + MUI Audit Toolkit
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   /**
    * Generate email template for audit failure
    */
   private generateAuditFailureTemplate(auditResult: AuditResult): EmailTemplate {
-    const subject = `❌ Audit Failed: ${auditResult.repoUrl}`;
-    
+    const subject = `❌ Audit Failed: ${auditResult.repoUrl}`
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -375,8 +372,8 @@ Automated audit by dev-mhany using Next.js + MUI Audit Toolkit
         </div>
       </body>
       </html>
-    `;
-    
+    `
+
     const text = `
 ❌ Audit Failed
 
@@ -398,32 +395,32 @@ What to do next:
 
 ---
 Automated audit by dev-mhany using Next.js + MUI Audit Toolkit
-    `;
+    `
 
-    return { subject, html, text };
+    return { subject, html, text }
   }
 
   private getScoreColor(score?: number): string {
-    if (!score) return '#6c757d';
-    if (score >= 90) return '#28a745';
-    if (score >= 80) return '#20c997';
-    if (score >= 70) return '#ffc107';
-    if (score >= 60) return '#fd7e14';
-    return '#dc3545';
+    if (!score) return '#6c757d'
+    if (score >= 90) return '#28a745'
+    if (score >= 80) return '#20c997'
+    if (score >= 70) return '#ffc107'
+    if (score >= 60) return '#fd7e14'
+    return '#dc3545'
   }
 
   private getGradeColor(grade?: string): string {
-    if (!grade) return '#6c757d';
-    if (grade.startsWith('A')) return '#28a745';
-    if (grade.startsWith('B')) return '#20c997';
-    if (grade.startsWith('C')) return '#ffc107';
-    if (grade.startsWith('D')) return '#fd7e14';
-    return '#dc3545';
+    if (!grade) return '#6c757d'
+    if (grade.startsWith('A')) return '#28a745'
+    if (grade.startsWith('B')) return '#20c997'
+    if (grade.startsWith('C')) return '#ffc107'
+    if (grade.startsWith('D')) return '#fd7e14'
+    return '#dc3545'
   }
 
   private extractRepoFromUrl(url: string): string {
-    const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/);
-    return match ? match[1] : '';
+    const match = url.match(/github\.com\/([^\/]+\/[^\/]+)/)
+    return match ? match[1] : ''
   }
 
   /**
@@ -433,18 +430,18 @@ Automated audit by dev-mhany using Next.js + MUI Audit Toolkit
     if (!this.transporter) {
       return {
         success: false,
-        error: 'Email service not initialized',
-      };
+        error: 'Email service not initialized'
+      }
     }
 
     try {
-      await this.transporter.verify();
-      return { success: true };
+      await this.transporter.verify()
+      return { success: true }
     } catch (error: any) {
       return {
         success: false,
-        error: error.message,
-      };
+        error: error.message
+      }
     }
   }
 }
@@ -457,28 +454,31 @@ export function createEmailService(): EmailService | null {
       host: process.env.EMAIL_HOST,
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
-      auth: process.env.EMAIL_USER && process.env.EMAIL_PASS ? {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      } : undefined,
+      auth:
+        process.env.EMAIL_USER && process.env.EMAIL_PASS
+          ? {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS
+            }
+          : undefined,
       apiKey: process.env.EMAIL_API_KEY,
       fromEmail: process.env.EMAIL_FROM_ADDRESS || 'noreply@dev-mhany.com',
-      fromName: process.env.EMAIL_FROM_NAME || 'dev-mhany Audit Bot',
-    };
+      fromName: process.env.EMAIL_FROM_NAME || 'dev-mhany Audit Bot'
+    }
 
     // Only create service if properly configured
     if (!config.host && !config.apiKey) {
-      logger.warn('Email service not configured - notifications will be skipped');
-      return null;
+      logger.warn('Email service not configured - notifications will be skipped')
+      return null
     }
 
-    return new EmailService(config);
+    return new EmailService(config)
   } catch (error: any) {
     logger.error('Failed to create email service', {
-      error: error.message,
-    });
-    return null;
+      error: error.message
+    })
+    return null
   }
 }
 
-export const emailService = createEmailService();
+export const emailService = createEmailService()

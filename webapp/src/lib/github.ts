@@ -1,31 +1,31 @@
-import { Octokit } from '@octokit/rest';
-import { createAppAuth } from '@octokit/auth-app';
-import type { GitHubRepository, AuditRequest } from '@/types/audit';
+import { Octokit } from '@octokit/rest'
+import { createAppAuth } from '@octokit/auth-app'
+import type { GitHubRepository, AuditRequest } from '@/types/audit'
 
 export class GitHubService {
-  private octokit: Octokit;
-  private appId?: string;
-  private privateKey?: string;
-  private appOctokit?: Octokit;
+  private octokit: Octokit
+  private appId?: string
+  private privateKey?: string
+  private appOctokit?: Octokit
 
   constructor(token?: string) {
     this.octokit = new Octokit({
-      auth: token || process.env.GITHUB_TOKEN,
-    });
-    
+      auth: token || process.env.GITHUB_TOKEN
+    })
+
     // GitHub App configuration
-    this.appId = process.env.GITHUB_APP_ID;
-    this.privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
-    
+    this.appId = process.env.GITHUB_APP_ID
+    this.privateKey = process.env.GITHUB_APP_PRIVATE_KEY
+
     // Initialize GitHub App authentication if credentials are available
     if (this.appId && this.privateKey) {
       this.appOctokit = new Octokit({
         authStrategy: createAppAuth,
         auth: {
           appId: this.appId,
-          privateKey: this.privateKey.replace(/\\n/g, '\n'), // Handle escaped newlines
-        },
-      });
+          privateKey: this.privateKey.replace(/\\n/g, '\n') // Handle escaped newlines
+        }
+      })
     }
   }
 
@@ -33,30 +33,30 @@ export class GitHubService {
    * Parse a GitHub repository URL to extract owner and repo name
    */
   parseRepoUrl(repoUrl: string): { owner: string; repo: string } {
-    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+    const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/)
     if (!match) {
-      throw new Error('Invalid GitHub repository URL');
+      throw new Error('Invalid GitHub repository URL')
     }
     return {
       owner: match[1],
-      repo: match[2].replace(/\.git$/, ''),
-    };
+      repo: match[2].replace(/\.git$/, '')
+    }
   }
 
   /**
    * Validate repository access and get repository information
    */
   async validateRepository(repoUrl: string, token?: string): Promise<GitHubRepository> {
-    const { owner, repo } = this.parseRepoUrl(repoUrl);
-    
+    const { owner, repo } = this.parseRepoUrl(repoUrl)
+
     // Use provided token if available
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.repos.get({
         owner,
-        repo,
-      });
+        repo
+      })
 
       return {
         owner,
@@ -64,69 +64,82 @@ export class GitHubService {
         fullName: data.full_name,
         private: data.private,
         defaultBranch: data.default_branch,
-        hasAccess: true,
-      };
-    } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'status' in error && error.status === 404) {
-        throw new Error('Repository not found or you do not have access to it');
+        hasAccess: true
       }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to access repository: ${errorMessage}`);
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        error.status === 404
+      ) {
+        throw new Error('Repository not found or you do not have access to it')
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      throw new Error(`Failed to access repository: ${errorMessage}`)
     }
   }
 
   /**
    * Check if the repository has Next.js and MUI dependencies
    */
-  async checkProjectCompatibility(repoUrl: string, token?: string): Promise<{
-    hasNextjs: boolean;
-    hasMui: boolean;
-    packageJsonContent?: Record<string, unknown>;
+  async checkProjectCompatibility(
+    repoUrl: string,
+    token?: string
+  ): Promise<{
+    hasNextjs: boolean
+    hasMui: boolean
+    packageJsonContent?: Record<string, unknown>
   }> {
-    const { owner, repo } = this.parseRepoUrl(repoUrl);
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const { owner, repo } = this.parseRepoUrl(repoUrl)
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
-        path: 'package.json',
-      });
+        path: 'package.json'
+      })
 
       if ('content' in data) {
         const packageJsonContent = JSON.parse(
           Buffer.from(data.content, 'base64').toString('utf-8')
-        );
+        )
 
         const dependencies = {
           ...packageJsonContent.dependencies,
-          ...packageJsonContent.devDependencies,
-        };
+          ...packageJsonContent.devDependencies
+        }
 
-        const hasNextjs = !!(dependencies.next || dependencies['@next/core']);
+        const hasNextjs = !!(dependencies.next || dependencies['@next/core'])
         const hasMui = !!(
           dependencies['@mui/material'] ||
           dependencies['@material-ui/core'] ||
           dependencies['@mui/core']
-        );
+        )
 
         return {
           hasNextjs,
           hasMui,
-          packageJsonContent,
-        };
+          packageJsonContent
+        }
       }
 
       return {
         hasNextjs: false,
-        hasMui: false,
-      };
-    } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'status' in error && error.status === 404) {
-        throw new Error('package.json not found in repository');
+        hasMui: false
       }
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to check project compatibility: ${errorMessage}`);
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'status' in error &&
+        error.status === 404
+      ) {
+        throw new Error('package.json not found in repository')
+      }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      throw new Error(`Failed to check project compatibility: ${errorMessage}`)
     }
   }
 
@@ -139,16 +152,16 @@ export class GitHubService {
     inputs: Record<string, unknown>,
     token?: string
   ): Promise<{ success: boolean; workflowRunId?: number; error?: string }> {
-    const { owner, repo } = this.parseRepoUrl(repoUrl);
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const { owner, repo } = this.parseRepoUrl(repoUrl)
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       // First, check if the workflow file exists
       await octokit.rest.repos.getContent({
         owner,
         repo,
-        path: `.github/workflows/${workflowFileName}`,
-      });
+        path: `.github/workflows/${workflowFileName}`
+      })
 
       // Trigger the workflow
       const response = await octokit.rest.actions.createWorkflowDispatch({
@@ -156,8 +169,8 @@ export class GitHubService {
         repo,
         workflow_id: workflowFileName,
         ref: (inputs.branch as string) || 'main',
-        inputs,
-      });
+        inputs
+      })
 
       // The workflow dispatch doesn't return the run ID directly
       // We need to fetch recent workflow runs to find the one we just triggered
@@ -165,26 +178,26 @@ export class GitHubService {
         owner,
         repo,
         workflow_id: workflowFileName,
-        per_page: 1,
-      });
+        per_page: 1
+      })
 
-      const latestRun = workflowRuns.data.workflow_runs[0];
+      const latestRun = workflowRuns.data.workflow_runs[0]
 
       return {
         success: true,
-        workflowRunId: latestRun?.id,
-      };
+        workflowRunId: latestRun?.id
+      }
     } catch (error: any) {
       if (error.status === 404) {
         return {
           success: false,
-          error: 'GitHub Actions workflow not found in repository',
-        };
+          error: 'GitHub Actions workflow not found in repository'
+        }
       }
       return {
         success: false,
-        error: `Failed to trigger workflow: ${error.message}`,
-      };
+        error: `Failed to trigger workflow: ${error.message}`
+      }
     }
   }
 
@@ -197,21 +210,21 @@ export class GitHubService {
     runId: number,
     token?: string
   ): Promise<{
-    id: number;
-    status: string | null;
-    conclusion: string | null;
-    html_url: string;
-    created_at: string;
-    updated_at: string;
+    id: number
+    status: string | null
+    conclusion: string | null
+    html_url: string
+    created_at: string
+    updated_at: string
   }> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.actions.getWorkflowRun({
         owner,
         repo,
-        run_id: runId,
-      });
+        run_id: runId
+      })
 
       return {
         id: data.id,
@@ -219,10 +232,10 @@ export class GitHubService {
         conclusion: data.conclusion,
         html_url: data.html_url,
         created_at: data.created_at,
-        updated_at: data.updated_at,
-      };
+        updated_at: data.updated_at
+      }
     } catch (error: any) {
-      throw new Error(`Failed to get workflow run status: ${error.message}`);
+      throw new Error(`Failed to get workflow run status: ${error.message}`)
     }
   }
 
@@ -233,8 +246,8 @@ export class GitHubService {
     repoUrl: string,
     token?: string
   ): Promise<{ success: boolean; error?: string }> {
-    const { owner, repo } = this.parseRepoUrl(repoUrl);
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const { owner, repo } = this.parseRepoUrl(repoUrl)
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     const workflowContent = `name: Next.js + MUI Audit by dev-mhany
 
@@ -299,7 +312,7 @@ jobs:
         run: |
           echo "Audit completed for \${{ github.repository }}"
           # Add email notification logic here if needed
-`;
+`
 
     try {
       // Check if workflow already exists
@@ -307,14 +320,14 @@ jobs:
         await octokit.rest.repos.getContent({
           owner,
           repo,
-          path: '.github/workflows/nextjs-mui-audit.yml',
-        });
-        
+          path: '.github/workflows/nextjs-mui-audit.yml'
+        })
+
         // Workflow already exists
-        return { success: true };
+        return { success: true }
       } catch (error: any) {
         if (error.status !== 404) {
-          throw error;
+          throw error
         }
       }
 
@@ -325,15 +338,15 @@ jobs:
         path: '.github/workflows/nextjs-mui-audit.yml',
         message: 'Add Next.js + MUI audit workflow by dev-mhany',
         content: Buffer.from(workflowContent).toString('base64'),
-        branch: 'main',
-      });
+        branch: 'main'
+      })
 
-      return { success: true };
+      return { success: true }
     } catch (error: any) {
       return {
         success: false,
-        error: `Failed to create workflow: ${error.message}`,
-      };
+        error: `Failed to create workflow: ${error.message}`
+      }
     }
   }
 
@@ -346,20 +359,20 @@ jobs:
    */
   async getInstallation(owner: string, repo: string): Promise<any | null> {
     if (!this.appOctokit) {
-      throw new Error('GitHub App authentication not configured');
+      throw new Error('GitHub App authentication not configured')
     }
 
     try {
       const { data } = await this.appOctokit.rest.apps.getRepoInstallation({
         owner,
-        repo,
-      });
-      return data;
+        repo
+      })
+      return data
     } catch (error: any) {
       if (error.status === 404) {
-        return null; // App not installed
+        return null // App not installed
       }
-      throw error;
+      throw error
     }
   }
 
@@ -368,19 +381,19 @@ jobs:
    */
   async getInstallationById(installationId: string): Promise<any | null> {
     if (!this.appOctokit) {
-      throw new Error('GitHub App authentication not configured');
+      throw new Error('GitHub App authentication not configured')
     }
 
     try {
       const { data } = await this.appOctokit.rest.apps.getInstallation({
-        installation_id: parseInt(installationId, 10),
-      });
-      return data;
+        installation_id: parseInt(installationId, 10)
+      })
+      return data
     } catch (error: any) {
       if (error.status === 404) {
-        return null;
+        return null
       }
-      throw error;
+      throw error
     }
   }
 
@@ -389,7 +402,7 @@ jobs:
    */
   async createInstallationToken(installationId: number): Promise<string> {
     if (!this.appOctokit) {
-      throw new Error('GitHub App authentication not configured');
+      throw new Error('GitHub App authentication not configured')
     }
 
     try {
@@ -400,12 +413,12 @@ jobs:
           pull_requests: 'write',
           checks: 'write',
           metadata: 'read',
-          actions: 'read',
-        },
-      });
-      return data.token;
+          actions: 'read'
+        }
+      })
+      return data.token
     } catch (error: any) {
-      throw new Error(`Failed to create installation token: ${error.message}`);
+      throw new Error(`Failed to create installation token: ${error.message}`)
     }
   }
 
@@ -419,31 +432,31 @@ jobs:
     clientPayload: any,
     token?: string
   ): Promise<{ success: boolean; runId?: number; error?: string }> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       await octokit.rest.repos.createDispatchEvent({
         owner,
         repo,
         event_type: eventType,
-        client_payload: clientPayload,
-      });
+        client_payload: clientPayload
+      })
 
       // Wait a moment then get the latest workflow run
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const runs = await this.getWorkflowRuns(owner, repo, 'run-audit.yml', token);
-      const latestRun = runs[0];
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      const runs = await this.getWorkflowRuns(owner, repo, 'run-audit.yml', token)
+      const latestRun = runs[0]
 
       return {
         success: true,
-        runId: latestRun?.id,
-      };
+        runId: latestRun?.id
+      }
     } catch (error: any) {
       return {
         success: false,
-        error: error.message,
-      };
+        error: error.message
+      }
     }
   }
 
@@ -456,18 +469,18 @@ jobs:
     workflowFile: string,
     token?: string
   ): Promise<any[]> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.actions.listWorkflowRuns({
         owner,
         repo,
         workflow_id: workflowFile,
-        per_page: 10,
-      });
-      return data.workflow_runs;
+        per_page: 10
+      })
+      return data.workflow_runs
     } catch (error: any) {
-      throw new Error(`Failed to get workflow runs: ${error.message}`);
+      throw new Error(`Failed to get workflow runs: ${error.message}`)
     }
   }
 
@@ -480,7 +493,7 @@ jobs:
     options: { state?: 'open' | 'closed' | 'all'; head?: string } = {},
     token?: string
   ): Promise<any[]> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.pulls.list({
@@ -488,11 +501,11 @@ jobs:
         repo,
         state: options.state || 'open',
         head: options.head,
-        per_page: 20,
-      });
-      return data;
+        per_page: 20
+      })
+      return data
     } catch (error: any) {
-      throw new Error(`Failed to get pull requests: ${error.message}`);
+      throw new Error(`Failed to get pull requests: ${error.message}`)
     }
   }
 
@@ -505,17 +518,17 @@ jobs:
     runId: string,
     token?: string
   ): Promise<any[]> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.actions.listWorkflowRunArtifacts({
         owner,
         repo,
-        run_id: parseInt(runId, 10),
-      });
-      return data.artifacts;
+        run_id: parseInt(runId, 10)
+      })
+      return data.artifacts
     } catch (error: any) {
-      throw new Error(`Failed to get workflow artifacts: ${error.message}`);
+      throw new Error(`Failed to get workflow artifacts: ${error.message}`)
     }
   }
 
@@ -529,18 +542,18 @@ jobs:
     ref?: string,
     token?: string
   ): Promise<any> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       const { data } = await octokit.rest.repos.getContent({
         owner,
         repo,
         path,
-        ref,
-      });
-      return data;
+        ref
+      })
+      return data
     } catch (error: any) {
-      throw new Error(`Failed to get repository content: ${error.message}`);
+      throw new Error(`Failed to get repository content: ${error.message}`)
     }
   }
 
@@ -553,24 +566,24 @@ jobs:
     runId: string,
     token?: string
   ): Promise<any[]> {
-    const octokit = token ? new Octokit({ auth: token }) : this.octokit;
+    const octokit = token ? new Octokit({ auth: token }) : this.octokit
 
     try {
       // Get the commit SHA from the workflow run
       const { data: run } = await octokit.rest.actions.getWorkflowRun({
         owner,
         repo,
-        run_id: parseInt(runId, 10),
-      });
+        run_id: parseInt(runId, 10)
+      })
 
       const { data } = await octokit.rest.checks.listForRef({
         owner,
         repo,
-        ref: run.head_sha,
-      });
-      return data.check_runs;
+        ref: run.head_sha
+      })
+      return data.check_runs
     } catch (error: any) {
-      throw new Error(`Failed to get check runs: ${error.message}`);
+      throw new Error(`Failed to get check runs: ${error.message}`)
     }
   }
 
@@ -582,64 +595,63 @@ jobs:
     signature: string,
     secret?: string
   ): Promise<boolean> {
-    const webhookSecret = secret || process.env.GITHUB_WEBHOOK_SECRET;
-    
+    const webhookSecret = secret || process.env.GITHUB_WEBHOOK_SECRET
+
     if (!signature || !webhookSecret) {
-      return false;
+      return false
     }
 
     try {
       // Normalize signature format
-      const normalizedSignature = signature.startsWith('sha256=') ? signature : `sha256=${signature}`;
-      
+      const normalizedSignature = signature.startsWith('sha256=')
+        ? signature
+        : `sha256=${signature}`
+
       // Create HMAC using Web Crypto API (Node.js 16+)
-      const encoder = new TextEncoder();
-      const keyBuffer = encoder.encode(webhookSecret);
-      const payloadBuffer = encoder.encode(payload);
-      
+      const encoder = new TextEncoder()
+      const keyBuffer = encoder.encode(webhookSecret)
+      const payloadBuffer = encoder.encode(payload)
+
       const cryptoKey = await crypto.subtle.importKey(
         'raw',
         keyBuffer,
         { name: 'HMAC', hash: 'SHA-256' },
         false,
         ['sign']
-      );
-      
-      const signatureBuffer = await crypto.subtle.sign(
-        'HMAC',
-        cryptoKey,
-        payloadBuffer
-      );
-      
+      )
+
+      const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, payloadBuffer)
+
       // Convert to hex string
-      const computedSignature = 'sha256=' + Array.from(new Uint8Array(signatureBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-      
+      const computedSignature =
+        'sha256=' +
+        Array.from(new Uint8Array(signatureBuffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+
       // Use timing-safe comparison
-      return this.timingSafeEqual(normalizedSignature, computedSignature);
-      
+      return this.timingSafeEqual(normalizedSignature, computedSignature)
     } catch (error) {
-      console.error('Webhook signature verification failed:', error);
-      return false;
+      console.error('Webhook signature verification failed:', error)
+      return false
     }
   }
-  
+
   /**
    * Timing-safe string comparison to prevent timing attacks
    */
   private timingSafeEqual(a: string, b: string): boolean {
     if (a.length !== b.length) {
-      return false;
+      return false
     }
-    
-    let result = 0;
+
+    let result = 0
     for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i)
     }
-    
-    return result === 0;
+
+    return result === 0
   }
 }
 
-export const githubService = new GitHubService();
+export const githubService = new GitHubService()

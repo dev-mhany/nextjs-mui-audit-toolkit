@@ -2,13 +2,13 @@
 
 /**
  * Plugin Template Generator
- * 
+ *
  * Generates plugin templates for the Next.js + MUI Audit Toolkit
  */
 
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { writeFile, mkdir } from 'fs/promises'
+import { join } from 'path'
+import { existsSync } from 'fs'
 
 const templates = {
   basic: {
@@ -53,7 +53,7 @@ export default {
   }
 };`
   },
-  
+
   advanced: {
     name: 'Advanced Plugin Template',
     description: 'Comprehensive plugin with hooks, processors, and custom logic',
@@ -161,7 +161,7 @@ export default {
   }
 };`
   },
-  
+
   accessibility: {
     name: 'Accessibility Plugin Template',
     description: 'Template for accessibility-focused plugins',
@@ -250,7 +250,7 @@ export default {
   }
 };`
   },
-  
+
   performance: {
     name: 'Performance Plugin Template',
     description: 'Template for performance-focused plugins',
@@ -337,44 +337,46 @@ export default {
   }
 };`
   }
-};
+}
 
 async function generatePlugin(templateType, pluginName, options = {}) {
   if (!templates[templateType]) {
-    throw new Error(`Template type "${templateType}" not found. Available: ${Object.keys(templates).join(', ')}`);
+    throw new Error(
+      `Template type "${templateType}" not found. Available: ${Object.keys(templates).join(', ')}`
+    )
   }
-  
-  const template = templates[templateType];
-  const pluginContent = template.template(pluginName, options);
-  
+
+  const template = templates[templateType]
+  const pluginContent = template.template(pluginName, options)
+
   // Create plugins directory if it doesn't exist
-  const pluginsDir = join(process.cwd(), 'plugins');
+  const pluginsDir = join(process.cwd(), 'plugins')
   if (!existsSync(pluginsDir)) {
-    await mkdir(pluginsDir, { recursive: true });
+    await mkdir(pluginsDir, { recursive: true })
   }
-  
-  const fileName = `${pluginName}.js`;
-  const filePath = join(pluginsDir, fileName);
-  
+
+  const fileName = `${pluginName}.js`
+  const filePath = join(pluginsDir, fileName)
+
   if (existsSync(filePath) && !options.overwrite) {
-    throw new Error(`Plugin file "${fileName}" already exists. Use --overwrite to replace it.`);
+    throw new Error(`Plugin file "${fileName}" already exists. Use --overwrite to replace it.`)
   }
-  
-  await writeFile(filePath, pluginContent);
-  
+
+  await writeFile(filePath, pluginContent)
+
   return {
     templateType,
     pluginName,
     fileName,
     filePath,
     template: template.name
-  };
+  }
 }
 
 // CLI interface
 async function main() {
-  const args = process.argv.slice(2);
-  
+  const args = process.argv.slice(2)
+
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     console.log(`\n🔌 Plugin Template Generator
 
@@ -397,55 +399,56 @@ Examples:
   node create-plugin.js basic my-custom-plugin
   node create-plugin.js accessibility a11y-checker --author "Team"
   node create-plugin.js performance bundle-optimizer --description "Bundle size optimizer"
-`);
-    return;
+`)
+    return
   }
-  
-  const templateType = args[0];
-  const pluginName = args[1];
-  
+
+  const templateType = args[0]
+  const pluginName = args[1]
+
   if (!pluginName) {
-    console.error('❌ Plugin name is required');
-    process.exit(1);
+    console.error('❌ Plugin name is required')
+    process.exit(1)
   }
-  
+
   // Parse options
-  const options = {};
+  const options = {}
   for (let i = 2; i < args.length; i++) {
     if (args[i] === '--description' && args[i + 1]) {
-      options.description = args[++i];
+      options.description = args[++i]
     } else if (args[i] === '--author' && args[i + 1]) {
-      options.author = args[++i];
+      options.author = args[++i]
     } else if (args[i] === '--category' && args[i + 1]) {
-      options.category = args[++i];
+      options.category = args[++i]
     } else if (args[i] === '--severity' && args[i + 1]) {
-      options.severity = args[++i];
+      options.severity = args[++i]
     } else if (args[i] === '--overwrite') {
-      options.overwrite = true;
+      options.overwrite = true
     }
   }
-  
+
   try {
-    const result = await generatePlugin(templateType, pluginName, options);
-    
-    console.log('✅ Plugin generated successfully!');
-    console.log(`📁 File: ${result.filePath}`);
-    console.log(`🔧 Template: ${result.template}`);
-    console.log(`📦 Plugin Name: ${result.pluginName}`);
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Edit the generated plugin file to add your custom logic');
-    console.log('2. Test your plugin: npx nextjs-mui-audit plugin --load ./plugins/' + result.fileName);
-    console.log('3. Add your plugin to audit.config.js to use it in audits');
-    
+    const result = await generatePlugin(templateType, pluginName, options)
+
+    console.log('✅ Plugin generated successfully!')
+    console.log(`📁 File: ${result.filePath}`)
+    console.log(`🔧 Template: ${result.template}`)
+    console.log(`📦 Plugin Name: ${result.pluginName}`)
+    console.log('')
+    console.log('Next steps:')
+    console.log('1. Edit the generated plugin file to add your custom logic')
+    console.log(
+      '2. Test your plugin: npx nextjs-mui-audit plugin --load ./plugins/' + result.fileName
+    )
+    console.log('3. Add your plugin to audit.config.js to use it in audits')
   } catch (error) {
-    console.error('❌ Failed to generate plugin:', error.message);
-    process.exit(1);
+    console.error('❌ Failed to generate plugin:', error.message)
+    process.exit(1)
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch(console.error)
 }
 
-export { generatePlugin, templates };
+export { generatePlugin, templates }

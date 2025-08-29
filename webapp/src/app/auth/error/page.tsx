@@ -13,14 +13,14 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  CircularProgress,
+  CircularProgress
 } from '@mui/material'
 import {
   Error as ErrorIcon,
   Refresh as RefreshIcon,
   Help as HelpIcon,
   Home as HomeIcon,
-  GitHub as GitHubIcon,
+  GitHub as GitHubIcon
 } from '@mui/icons-material'
 import { useSearchParams, useRouter } from 'next/navigation'
 
@@ -76,7 +76,8 @@ function AuthErrorContent() {
       case 'invalid_installation':
         return {
           title: 'Invalid Installation',
-          description: 'The installation ID is invalid or the app is not properly installed.',
+          description:
+            'The installation ID is invalid or the app is not properly installed.',
           suggestions: [
             'Try installing the GitHub App again',
             'Check that the app is installed on the correct account',
@@ -104,7 +105,7 @@ function AuthErrorContent() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '100vh',
+          minHeight: '100vh'
         }}
       >
         <CircularProgress />
@@ -122,71 +123,73 @@ function AuthErrorContent() {
         alignItems: 'center',
         minHeight: '100vh',
         p: 2,
-        bgcolor: 'background.default',
+        bgcolor: 'background.default'
       }}
     >
       <Card sx={{ maxWidth: 600, width: '100%' }} elevation={3}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <ErrorIcon color="error" sx={{ fontSize: 64, mb: 2 }} />
-            <Typography variant="h4" gutterBottom>
+            <ErrorIcon color='error' sx={{ fontSize: 64, mb: 2 }} />
+            <Typography variant='h4' gutterBottom>
               Installation Error
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant='body1' color='text.secondary'>
               {errorDetails.description}
             </Typography>
           </Box>
 
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity='error' sx={{ mb: 3 }}>
             <AlertTitle>{errorDetails.title}</AlertTitle>
             {errorData?.message}
           </Alert>
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <HelpIcon />
               Troubleshooting Steps
             </Typography>
-            
+
             <List dense>
               {errorDetails.suggestions.map((suggestion, index) => (
                 <ListItem key={index}>
                   <ListItemIcon>
-                    <Typography variant="body2" color="primary" fontWeight="bold">
+                    <Typography variant='body2' color='primary' fontWeight='bold'>
                       {index + 1}.
                     </Typography>
                   </ListItemIcon>
-                  <ListItemText
-                    primary={suggestion}
-                  />
+                  <ListItemText primary={suggestion} />
                 </ListItem>
               ))}
             </List>
           </Box>
 
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert severity='info' sx={{ mb: 3 }}>
             <AlertTitle>Alternative: Use Personal Access Token</AlertTitle>
-            <Typography variant="body2">
-              If you continue to have issues with the GitHub App installation, 
-              you can use a Personal Access Token as a fallback option. 
-              This provides similar functionality but requires manual token management.
+            <Typography variant='body2'>
+              If you continue to have issues with the GitHub App installation, you can use
+              a Personal Access Token as a fallback option. This provides similar
+              functionality but requires manual token management.
             </Typography>
           </Alert>
 
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
-              variant="contained"
-              size="large"
+              variant='contained'
+              size='large'
               onClick={handleRetry}
               startIcon={<GitHubIcon />}
               sx={{ flex: 1, minWidth: 200 }}
             >
               Retry Installation
             </Button>
-            
+
             <Button
-              variant="outlined"
-              size="large"
+              variant='outlined'
+              size='large'
               onClick={handleGoHome}
               startIcon={<HomeIcon />}
               sx={{ flex: 1, minWidth: 200 }}
@@ -196,12 +199,14 @@ function AuthErrorContent() {
           </Box>
 
           <Box sx={{ mt: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant='h6' gutterBottom>
               🆘 Need Help?
             </Typography>
-            <Typography variant="body2" component="div">
-              <strong>Error Code:</strong> {errorData?.error}<br />
-              <strong>Error Message:</strong> {errorData?.message}<br />
+            <Typography variant='body2' component='div'>
+              <strong>Error Code:</strong> {errorData?.error}
+              <br />
+              <strong>Error Message:</strong> {errorData?.message}
+              <br />
               <strong>Time:</strong> {new Date().toLocaleString()}
             </Typography>
           </Box>
@@ -213,18 +218,20 @@ function AuthErrorContent() {
 
 export default function AuthErrorPage() {
   return (
-    <Suspense fallback={
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    }>
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh'
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      }
+    >
       <AuthErrorContent />
     </Suspense>
   )

@@ -31,12 +31,10 @@ export default function ImportGuardsTest() {
       <Button startIcon={<Add />}>Add Item</Button>
       <Button startIcon={<Edit />}>Edit Item</Button>
       <Button startIcon={<Delete />}>Delete Item</Button>
-      
+
       {/* Using the properly imported lodash functions */}
-      <Typography>
-        {pick({ name: 'John', age: 30, city: 'NYC' }, ['name', 'age']).name}
-      </Typography>
-      
+      <Typography>{pick({ name: 'John', age: 30, city: 'NYC' }, ['name', 'age']).name}</Typography>
+
       {/* This would cause issues if we used wildcard imports */}
       <Box sx={{ display: 'flex', gap: 2 }}>
         <Search />

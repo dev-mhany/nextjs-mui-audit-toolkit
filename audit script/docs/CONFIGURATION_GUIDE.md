@@ -12,29 +12,29 @@ The main configuration file should be placed in your project root:
 module.exports = {
   // Scoring and thresholds
   thresholds: {
-    minScore: 85,              // Minimum passing score (0-100)
-    failOnCritical: false      // Fail audit if critical issues found
+    minScore: 85, // Minimum passing score (0-100)
+    failOnCritical: false // Fail audit if critical issues found
   },
-  
+
   // Output configuration
   output: {
-    directory: './audit-results',  // Output directory for reports
-    verbose: false,               // Detailed console output
-    ci: false                     // CI mode for machine-readable output
+    directory: './audit-results', // Output directory for reports
+    verbose: false, // Detailed console output
+    ci: false // CI mode for machine-readable output
   },
-  
+
   // Category weights (must sum to 100)
   weights: {
-    nextjs: 20,           // Next.js architecture and best practices
-    mui: 20,              // Material-UI usage and patterns
-    accessibility: 15,    // WCAG AA compliance
-    responsive: 15,       // Mobile-first responsive design
-    performance: 10,      // Performance optimization
-    security: 5,          // Security best practices
-    codeQuality: 10,      // Code quality and standards
-    testing: 5            // Testing coverage and quality
+    nextjs: 20, // Next.js architecture and best practices
+    mui: 20, // Material-UI usage and patterns
+    accessibility: 15, // WCAG AA compliance
+    responsive: 15, // Mobile-first responsive design
+    performance: 10, // Performance optimization
+    security: 5, // Security best practices
+    codeQuality: 10, // Code quality and standards
+    testing: 5 // Testing coverage and quality
   },
-  
+
   // Custom rules
   rules: {
     'no-inline-styles': {
@@ -51,12 +51,12 @@ module.exports = {
       category: 'accessibility'
     }
   },
-  
+
   // Plugin configuration
   plugins: [
-    './plugins/custom-rules.js',     // Local plugin file
-    './plugins/',                    // Plugin directory
-    'audit-plugin-package',          // NPM package
+    './plugins/custom-rules.js', // Local plugin file
+    './plugins/', // Plugin directory
+    'audit-plugin-package', // NPM package
     {
       name: 'custom-plugin',
       path: './plugins/custom.js',
@@ -66,18 +66,18 @@ module.exports = {
       }
     }
   ],
-  
+
   // ESLint integration
   eslint: {
     enabled: true,
     configFile: '.eslintrc.js',
     ignorePattern: ['node_modules/', 'dist/', '.next/']
   },
-  
+
   // Runtime audit configuration
   runtime: {
-    enabled: true,              // Enable runtime audits (Lighthouse, etc.)
-    timeout: 30000,            // Timeout in milliseconds
+    enabled: true, // Enable runtime audits (Lighthouse, etc.)
+    timeout: 30000, // Timeout in milliseconds
     lighthouse: {
       enabled: true,
       mobile: true,
@@ -90,7 +90,7 @@ module.exports = {
       browsers: ['chromium']
     }
   },
-  
+
   // PWA configuration
   pwa: {
     enabled: true,
@@ -98,32 +98,32 @@ module.exports = {
     requireServiceWorker: false,
     offlineSupport: false
   },
-  
+
   // Performance budgets
   budgets: {
-    firstLoadJS: 180000,        // 180KB max first-load JS
-    totalBlockingTime: 300,     // 300ms max TBT
+    firstLoadJS: 180000, // 180KB max first-load JS
+    totalBlockingTime: 300, // 300ms max TBT
     largestContentfulPaint: 2500, // 2.5s max LCP
-    cumulativeLayoutShift: 0.1  // 0.1 max CLS
+    cumulativeLayoutShift: 0.1 // 0.1 max CLS
   },
-  
+
   // Cache configuration
   cache: {
     enabled: true,
     directory: '.audit-cache',
-    ttl: 3600000,              // 1 hour in milliseconds
-    maxSize: 100               // 100MB max cache size
+    ttl: 3600000, // 1 hour in milliseconds
+    maxSize: 100 // 100MB max cache size
   },
-  
+
   // Reporting configuration
   reports: {
-    json: true,                // Generate JSON report
-    markdown: true,            // Generate Markdown report
-    html: true,                // Generate HTML report
-    console: true,             // Console output
-    junit: false               // JUnit XML for CI integration
+    json: true, // Generate JSON report
+    markdown: true, // Generate Markdown report
+    html: true, // Generate HTML report
+    console: true, // Console output
+    junit: false // JUnit XML for CI integration
   },
-  
+
   // Exclude patterns
   exclude: [
     'node_modules/**',
@@ -133,7 +133,7 @@ module.exports = {
     '**/*.test.{js,jsx,ts,tsx}',
     '**/*.spec.{js,jsx,ts,tsx}'
   ],
-  
+
   // Include patterns (if specified, only these will be scanned)
   include: [
     'src/**/*.{js,jsx,ts,tsx}',
@@ -141,7 +141,7 @@ module.exports = {
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}'
   ]
-};
+}
 ```
 
 ## Environment Variables
@@ -216,7 +216,7 @@ module.exports = {
   cache: {
     enabled: true
   }
-};
+}
 ```
 
 ### CI/CD Mode
@@ -234,10 +234,10 @@ module.exports = {
     directory: './audit-results'
   },
   runtime: {
-    enabled: false  // Static analysis only for security
+    enabled: false // Static analysis only for security
   },
   cache: {
-    enabled: false  // Fresh run every time
+    enabled: false // Fresh run every time
   },
   reports: {
     json: true,
@@ -246,7 +246,7 @@ module.exports = {
     console: false,
     junit: true
   }
-};
+}
 ```
 
 ### Production Mode
@@ -271,12 +271,12 @@ module.exports = {
     }
   },
   budgets: {
-    firstLoadJS: 150000,  // Stricter budget
+    firstLoadJS: 150000, // Stricter budget
     totalBlockingTime: 200,
     largestContentfulPaint: 2000,
     cumulativeLayoutShift: 0.05
   }
-};
+}
 ```
 
 ## Custom Rules
@@ -311,14 +311,14 @@ rules: {
     category: 'mui',
     autofix: false
   },
-  
+
   'require-key-prop': {
     pattern: /\.map\([^}]*<[^>]*(?!.*key=)/g,
     severity: 'error',
     message: 'Missing key prop in mapped elements',
     category: 'codeQuality'
   },
-  
+
   'no-console-log': {
     pattern: /console\.log\(/g,
     severity: 'warning',
@@ -341,26 +341,26 @@ rules: {
 module.exports = {
   name: 'custom-plugin',
   version: '1.0.0',
-  
+
   // Plugin lifecycle hooks
   hooks: {
-    beforeScan: (config) => {
-      console.log('Starting scan...');
+    beforeScan: config => {
+      console.log('Starting scan...')
     },
-    
-    afterScan: (results) => {
-      console.log('Scan completed');
+
+    afterScan: results => {
+      console.log('Scan completed')
     },
-    
-    beforeGrade: (results) => {
+
+    beforeGrade: results => {
       // Modify results before grading
     },
-    
-    afterGrade: (grades) => {
+
+    afterGrade: grades => {
       // Process grades
     }
   },
-  
+
   // Custom rules provided by plugin
   rules: {
     'plugin-rule': {
@@ -370,18 +370,18 @@ module.exports = {
       category: 'codeQuality'
     }
   },
-  
+
   // Plugin configuration schema
   configSchema: {
     enabled: 'boolean',
     severity: 'string'
   },
-  
+
   // Plugin initialization
-  init: (options) => {
+  init: options => {
     // Setup plugin
   }
-};
+}
 ```
 
 ### Loading Plugins
@@ -391,13 +391,13 @@ module.exports = {
 plugins: [
   // File path
   './plugins/custom-plugin.js',
-  
+
   // Directory (loads all .js files)
   './plugins/',
-  
+
   // NPM package
   'audit-plugin-accessibility',
-  
+
   // With options
   {
     name: 'custom-plugin',
@@ -428,9 +428,9 @@ module.exports = {
           }
         ]
       }
-    ];
+    ]
   }
-};
+}
 ```
 
 ### Package.json Scripts
@@ -474,23 +474,24 @@ jobs:
 ### Common Issues
 
 1. **Configuration Not Found**
+
    ```bash
    # Check config file exists
    ls -la audit.config.js
-   
+
    # Use absolute path
    npx nextjs-mui-audit run --config /absolute/path/to/config.js
    ```
 
 2. **Plugin Loading Errors**
+
    ```javascript
    // Ensure plugin paths are correct
-   plugins: [
-     path.resolve(__dirname, './plugins/custom.js')
-   ]
+   plugins: [path.resolve(__dirname, './plugins/custom.js')]
    ```
 
 3. **Rule Conflicts**
+
    ```javascript
    // Use unique rule names
    rules: {

@@ -33,11 +33,12 @@ body {
 
 /* Loading animations */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
-    opacity: .5;
+    opacity: 0.5;
   }
 }
 
@@ -50,7 +51,8 @@ body {
 .MuiTextField-root:focus-within {
   outline: 2px solid #1976d2;
   outline-offset: 2px;
-}html {
+}
+html {
   scroll-behavior: smooth;
 }
 
@@ -85,11 +87,12 @@ body {
 
 /* Loading animations */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
-    opacity: .5;
+    opacity: 0.5;
   }
 }
 

@@ -27,26 +27,26 @@ npx nextjs-mui-audit run [options]
 
 #### Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `-p, --path <path>` | string | `.` | Path to project directory |
-| `-o, --output <dir>` | string | `.` | Output directory for reports |
-| `-c, --config <path>` | string | - | Path to configuration file |
-| `--strict` | boolean | false | Fail on any critical issues |
-| `--min-score <score>` | number | 85 | Minimum acceptable score (0-100) |
-| `--verbose` | boolean | false | Show verbose output |
-| `--fix` | boolean | false | Auto-fix issues where possible |
-| `--no-cache` | boolean | false | Disable caching |
-| `--clear-cache` | boolean | false | Clear cache before running |
-| `--cache-info` | boolean | false | Show cache information and exit |
+| Option                | Type    | Default | Description                      |
+| --------------------- | ------- | ------- | -------------------------------- |
+| `-p, --path <path>`   | string  | `.`     | Path to project directory        |
+| `-o, --output <dir>`  | string  | `.`     | Output directory for reports     |
+| `-c, --config <path>` | string  | -       | Path to configuration file       |
+| `--strict`            | boolean | false   | Fail on any critical issues      |
+| `--min-score <score>` | number  | 85      | Minimum acceptable score (0-100) |
+| `--verbose`           | boolean | false   | Show verbose output              |
+| `--fix`               | boolean | false   | Auto-fix issues where possible   |
+| `--no-cache`          | boolean | false   | Disable caching                  |
+| `--clear-cache`       | boolean | false   | Clear cache before running       |
+| `--cache-info`        | boolean | false   | Show cache information and exit  |
 
 #### CI/CD Integration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `--ci` | boolean | false | CI mode: machine-readable output and exit codes |
-| `--no-runtime` | boolean | false | Skip runtime audits (static analysis only) |
-| `--smoke` | boolean | false | Run smoke test preset (fast basic checks) |
+| Option         | Type    | Default | Description                                     |
+| -------------- | ------- | ------- | ----------------------------------------------- |
+| `--ci`         | boolean | false   | CI mode: machine-readable output and exit codes |
+| `--no-runtime` | boolean | false   | Skip runtime audits (static analysis only)      |
+| `--smoke`      | boolean | false   | Run smoke test preset (fast basic checks)       |
 
 #### Examples
 
@@ -74,12 +74,12 @@ npx nextjs-mui-audit run --clear-cache --verbose
 
 The CLI uses standard exit codes for CI/CD integration:
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 0 | Success | Audit passed all checks |
-| 1 | Score Below Threshold | Score is below the minimum required |
-| 2 | Critical Issues | Critical issues found (in strict mode) |
-| 3 | Internal Error | Tool execution failed |
+| Code | Meaning               | Description                            |
+| ---- | --------------------- | -------------------------------------- |
+| 0    | Success               | Audit passed all checks                |
+| 1    | Score Below Threshold | Score is below the minimum required    |
+| 2    | Critical Issues       | Critical issues found (in strict mode) |
+| 3    | Internal Error        | Tool execution failed                  |
 
 ## CI Mode Output
 
@@ -123,14 +123,14 @@ module.exports = {
     minScore: 85,
     failOnCritical: false
   },
-  
+
   // Output configuration
   output: {
     directory: './audit-results',
     verbose: false,
     ci: false
   },
-  
+
   // Custom rules
   rules: {
     'custom-rule-name': {
@@ -139,28 +139,25 @@ module.exports = {
       message: 'Custom message'
     }
   },
-  
+
   // Plugin configuration
-  plugins: [
-    './custom-plugin.js',
-    'npm-plugin-name'
-  ],
-  
+  plugins: ['./custom-plugin.js', 'npm-plugin-name'],
+
   // Runtime configuration
   runtime: {
     enabled: true,
     timeout: 30000
   }
-};
+}
 ```
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `AUDIT_CONFIG_FILE` | Path to configuration file | `audit.config.js` |
-| `NODE_ENV` | Environment mode | `development` |
-| `LOG_LEVEL` | Logging level (error, warn, info, debug) | `info` |
+| Variable            | Description                              | Default           |
+| ------------------- | ---------------------------------------- | ----------------- |
+| `AUDIT_CONFIG_FILE` | Path to configuration file               | `audit.config.js` |
+| `NODE_ENV`          | Environment mode                         | `development`     |
+| `LOG_LEVEL`         | Logging level (error, warn, info, debug) | `info`            |
 
 ## Advanced Usage
 
@@ -205,18 +202,23 @@ npx nextjs-mui-audit run --ci --no-runtime --strict
 ### Common Issues
 
 1. **Node.js Version Error**
+
    ```bash
    Error: Node.js 18+ required
    ```
+
    Solution: Upgrade to Node.js 18 or higher
 
 2. **Permission Errors**
+
    ```bash
    Error: EACCES: permission denied
    ```
+
    Solution: Check file permissions or run with appropriate user privileges
 
 3. **Cache Issues**
+
    ```bash
    npx nextjs-mui-audit run --clear-cache
    ```

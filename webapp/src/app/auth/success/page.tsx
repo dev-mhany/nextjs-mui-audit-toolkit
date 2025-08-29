@@ -14,7 +14,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  CircularProgress,
+  CircularProgress
 } from '@mui/material'
 import {
   CheckCircle as CheckCircleIcon,
@@ -22,7 +22,7 @@ import {
   GitHub as GitHubIcon,
   Launch as LaunchIcon,
   Refresh as RefreshIcon,
-  Settings as SettingsIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material'
 import { useSearchParams, useRouter } from 'next/navigation'
 
@@ -62,7 +62,7 @@ function AuthSuccessContent() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '100vh',
+          minHeight: '100vh'
         }}
       >
         <CircularProgress />
@@ -78,70 +78,84 @@ function AuthSuccessContent() {
         alignItems: 'center',
         minHeight: '100vh',
         p: 2,
-        bgcolor: 'background.default',
+        bgcolor: 'background.default'
       }}
     >
       <Card sx={{ maxWidth: 600, width: '100%' }} elevation={3}>
         <CardContent sx={{ p: 4 }}>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <CheckCircleIcon color="success" sx={{ fontSize: 64, mb: 2 }} />
-            <Typography variant="h4" gutterBottom>
+            <CheckCircleIcon color='success' sx={{ fontSize: 64, mb: 2 }} />
+            <Typography variant='h4' gutterBottom>
               🎉 Installation Successful!
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              The dev-mhany audit toolkit has been successfully installed on your GitHub account.
+            <Typography variant='body1' color='text.secondary'>
+              The dev-mhany audit toolkit has been successfully installed on your GitHub
+              account.
             </Typography>
           </Box>
 
-          <Alert severity="success" sx={{ mb: 3 }}>
+          <Alert severity='success' sx={{ mb: 3 }}>
             <AlertTitle>GitHub App Installed</AlertTitle>
             The audit toolkit is now ready to analyze your Next.js + MUI projects.
           </Alert>
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='h6'
+              gutterBottom
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
               <GitHubIcon />
               Installation Details
             </Typography>
-            
+
             <List dense>
               <ListItem>
                 <ListItemIcon>
-                  <SecurityIcon color="primary" />
+                  <SecurityIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Account"
+                  primary='Account'
                   secondary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2">{installationData?.account}</Typography>
-                      <Chip size="small" label="Connected" color="success" variant="outlined" />
+                      <Typography variant='body2'>{installationData?.account}</Typography>
+                      <Chip
+                        size='small'
+                        label='Connected'
+                        color='success'
+                        variant='outlined'
+                      />
                     </Box>
                   }
                 />
               </ListItem>
-              
+
               <ListItem>
                 <ListItemIcon>
-                  <SettingsIcon color="primary" />
+                  <SettingsIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Installation ID"
+                  primary='Installation ID'
                   secondary={installationData?.installationId}
                 />
               </ListItem>
-              
+
               <ListItem>
                 <ListItemIcon>
-                  <RefreshIcon color="primary" />
+                  <RefreshIcon color='primary' />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Setup Action"
+                  primary='Setup Action'
                   secondary={
-                    <Chip 
-                      size="small" 
-                      label={installationData?.setupAction === 'install' ? 'New Installation' : 'Update'} 
-                      color="info" 
-                      variant="outlined" 
+                    <Chip
+                      size='small'
+                      label={
+                        installationData?.setupAction === 'install'
+                          ? 'New Installation'
+                          : 'Update'
+                      }
+                      color='info'
+                      variant='outlined'
                     />
                   }
                 />
@@ -149,30 +163,32 @@ function AuthSuccessContent() {
             </List>
           </Box>
 
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert severity='info' sx={{ mb: 3 }}>
             <AlertTitle>Security & Privacy</AlertTitle>
-            <Typography variant="body2">
-              • The app only accesses repositories you explicitly grant access to<br />
-              • No long-term tokens are stored on our servers<br />
-              • All audit data remains in your repository<br />
-              • You can revoke access anytime from GitHub settings
+            <Typography variant='body2'>
+              • The app only accesses repositories you explicitly grant access to
+              <br />
+              • No long-term tokens are stored on our servers
+              <br />
+              • All audit data remains in your repository
+              <br />• You can revoke access anytime from GitHub settings
             </Typography>
           </Alert>
 
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
-              variant="contained"
-              size="large"
+              variant='contained'
+              size='large'
               onClick={handleContinue}
               startIcon={<LaunchIcon />}
               sx={{ flex: 1, minWidth: 200 }}
             >
               Start Auditing Projects
             </Button>
-            
+
             <Button
-              variant="outlined"
-              size="large"
+              variant='outlined'
+              size='large'
               onClick={handleManageInstallation}
               startIcon={<SettingsIcon />}
               sx={{ flex: 1, minWidth: 200 }}
@@ -182,13 +198,17 @@ function AuthSuccessContent() {
           </Box>
 
           <Box sx={{ mt: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant='h6' gutterBottom>
               🚀 Next Steps
             </Typography>
-            <Typography variant="body2" component="div">
-              1. <strong>Return to the main page</strong> to start your first audit<br />
-              2. <strong>Enter a repository URL</strong> from your connected GitHub account<br />
-              3. <strong>Select audit options</strong> and click "Start Audit"<br />
+            <Typography variant='body2' component='div'>
+              1. <strong>Return to the main page</strong> to start your first audit
+              <br />
+              2. <strong>Enter a repository URL</strong> from your connected GitHub
+              account
+              <br />
+              3. <strong>Select audit options</strong> and click "Start Audit"
+              <br />
               4. <strong>Review results</strong> in the automatically created Pull Request
             </Typography>
           </Box>
@@ -200,18 +220,20 @@ function AuthSuccessContent() {
 
 export default function AuthSuccessPage() {
   return (
-    <Suspense fallback={
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    }>
+    <Suspense
+      fallback={
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh'
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      }
+    >
       <AuthSuccessContent />
     </Suspense>
   )

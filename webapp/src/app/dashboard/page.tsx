@@ -1,67 +1,56 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Grid, 
-  Container,
-  Tabs,
-  Tab,
-} from '@mui/material';
-import { AuditHistory } from '@/components/AuditHistory';
-import { DashboardStats } from '@/components/DashboardStats';
-import { RepositoryStats } from '@/components/RepositoryStats';
-import { AuditAnalytics } from '@/components/AuditAnalytics';
+import React from 'react'
+import { Box, Typography, Grid, Container, Tabs, Tab } from '@mui/material'
+import { AuditHistory } from '@/components/AuditHistory'
+import { DashboardStats } from '@/components/DashboardStats'
+import { RepositoryStats } from '@/components/RepositoryStats'
+import { AuditAnalytics } from '@/components/AuditAnalytics'
 
 interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+  children?: React.ReactNode
+  index: number
+  value: number
 }
 
 function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+  const { children, value, index, ...other } = props
 
   return (
     <div
-      role="tabpanel"
+      role='tabpanel'
       hidden={value !== index}
       id={`dashboard-tabpanel-${index}`}
       aria-labelledby={`dashboard-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
-  );
+  )
 }
 
 function a11yProps(index: number) {
   return {
     id: `dashboard-tab-${index}`,
-    'aria-controls': `dashboard-tabpanel-${index}`,
-  };
+    'aria-controls': `dashboard-tabpanel-${index}`
+  }
 }
 
 export default function DashboardPage() {
-  const [tabValue, setTabValue] = React.useState(0);
+  const [tabValue, setTabValue] = React.useState(0)
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+    setTabValue(newValue)
+  }
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth='xl'>
       <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h3" 
-          component="h1" 
+        <Typography
+          variant='h3'
+          component='h1'
           gutterBottom
-          sx={{ 
+          sx={{
             fontWeight: 700,
             textAlign: 'center',
             mb: 2
@@ -69,13 +58,8 @@ export default function DashboardPage() {
         >
           📊 Audit Dashboard
         </Typography>
-        
-        <Typography 
-          variant="h6" 
-          color="text.secondary" 
-          textAlign="center"
-          sx={{ mb: 4 }}
-        >
+
+        <Typography variant='h6' color='text.secondary' textAlign='center' sx={{ mb: 4 }}>
           Monitor and analyze your repository audit results
         </Typography>
       </Box>
@@ -89,10 +73,10 @@ export default function DashboardPage() {
 
       {/* Tabbed Content */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="dashboard tabs">
-          <Tab label="Recent Audits" {...a11yProps(0)} />
-          <Tab label="Repository Stats" {...a11yProps(1)} />
-          <Tab label="Analytics" {...a11yProps(2)} />
+        <Tabs value={tabValue} onChange={handleTabChange} aria-label='dashboard tabs'>
+          <Tab label='Recent Audits' {...a11yProps(0)} />
+          <Tab label='Repository Stats' {...a11yProps(1)} />
+          <Tab label='Analytics' {...a11yProps(2)} />
         </Tabs>
       </Box>
 
@@ -120,5 +104,5 @@ export default function DashboardPage() {
         </Grid>
       </TabPanel>
     </Container>
-  );
+  )
 }

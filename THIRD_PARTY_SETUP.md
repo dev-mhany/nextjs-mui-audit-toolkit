@@ -261,20 +261,24 @@ The system will automatically test email configuration on startup. Check the con
 ### Common Issues
 
 #### GitHub Authentication Fails
+
 - Verify your GitHub App ID and credentials
 - Ensure the private key includes the full content with headers
 - Check that the app is installed on the target repositories
 
 #### Email Sending Fails
+
 - Verify your email provider credentials
 - For Gmail: Ensure you're using an App Password, not your regular password
 - Check firewall settings for SMTP connections
 
 #### Database Errors
+
 - Ensure the `data` directory exists and is writable
 - Check file permissions on the database path
 
 #### Build Failures
+
 - Verify all required environment variables are set
 - Run `npm install` to ensure all dependencies are installed
 - Check for TypeScript compilation errors

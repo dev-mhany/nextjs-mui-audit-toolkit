@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import React from 'react';
+import React from 'react'
 import {
   Box,
   Typography,
@@ -11,31 +11,31 @@ import {
   Divider,
   Accordion,
   AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
+  AccordionDetails
+} from '@mui/material'
 import {
   ErrorOutline as ErrorIcon,
   Refresh as RefreshIcon,
   Home as HomeIcon,
   BugReport as BugReportIcon,
-  ExpandMore as ExpandMoreIcon,
-} from '@mui/icons-material';
+  ExpandMore as ExpandMoreIcon
+} from '@mui/icons-material'
 
 interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
-  errorId?: string;
+  hasError: boolean
+  error?: Error
+  errorInfo?: React.ErrorInfo
+  errorId?: string
 }
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
+  children: React.ReactNode
   fallback?: React.ComponentType<{
-    error?: Error;
-    resetError: () => void;
-    errorId?: string;
-  }>;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+    error?: Error
+    resetError: () => void
+    errorId?: string
+  }>
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
 }
 
 export class ErrorBoundary extends React.Component<
@@ -43,41 +43,41 @@ export class ErrorBoundary extends React.Component<
   ErrorBoundaryState
 > {
   constructor(props: ErrorBoundaryProps) {
-    super(props);
+    super(props)
     this.state = {
-      hasError: false,
-    };
+      hasError: false
+    }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    const errorId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+    const errorId = `error_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     return {
       hasError: true,
       error,
-      errorId,
-    };
+      errorId
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
 
     // Call custom error handler if provided
     if (this.props.onError) {
-      this.props.onError(error, errorInfo);
+      this.props.onError(error, errorInfo)
     }
 
     // Log error to external service (you can add services like Sentry here)
-    this.logErrorToService(error, errorInfo);
+    this.logErrorToService(error, errorInfo)
 
     this.setState({
       hasError: true,
       error,
-      errorInfo,
-    });
+      errorInfo
+    })
   }
 
   private logErrorToService = (error: Error, errorInfo: React.ErrorInfo) => {
@@ -89,8 +89,8 @@ export class ErrorBoundary extends React.Component<
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       url: window.location.href,
-      errorId: this.state.errorId,
-    };
+      errorId: this.state.errorId
+    }
 
     // Example: Send to your error tracking service
     // fetch('/api/errors', {
@@ -101,38 +101,38 @@ export class ErrorBoundary extends React.Component<
     //   // Silently fail error reporting
     // });
 
-    console.error('Error logged:', errorData);
-  };
+    console.error('Error logged:', errorData)
+  }
 
   private resetError = () => {
     this.setState({
       hasError: false,
       error: undefined,
       errorInfo: undefined,
-      errorId: undefined,
-    });
-  };
+      errorId: undefined
+    })
+  }
 
   private reloadPage = () => {
-    window.location.reload();
-  };
+    window.location.reload()
+  }
 
   private goHome = () => {
-    window.location.href = '/';
-  };
+    window.location.href = '/'
+  }
 
   render() {
     if (this.state.hasError) {
       // Use custom fallback component if provided
       if (this.props.fallback) {
-        const FallbackComponent = this.props.fallback;
+        const FallbackComponent = this.props.fallback
         return (
           <FallbackComponent
             error={this.state.error}
             resetError={this.resetError}
             errorId={this.state.errorId}
           />
-        );
+        )
       }
 
       // Default error UI
@@ -145,20 +145,20 @@ export class ErrorBoundary extends React.Component<
           goHome={this.goHome}
           errorId={this.state.errorId}
         />
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
 interface DefaultErrorFallbackProps {
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
-  resetError: () => void;
-  reloadPage: () => void;
-  goHome: () => void;
-  errorId?: string;
+  error?: Error
+  errorInfo?: React.ErrorInfo
+  resetError: () => void
+  reloadPage: () => void
+  goHome: () => void
+  errorId?: string
 }
 
 function DefaultErrorFallback({
@@ -167,9 +167,9 @@ function DefaultErrorFallback({
   resetError,
   reloadPage,
   goHome,
-  errorId,
+  errorId
 }: DefaultErrorFallbackProps) {
-  const [showDetails, setShowDetails] = React.useState(false);
+  const [showDetails, setShowDetails] = React.useState(false)
 
   return (
     <Box
@@ -180,7 +180,7 @@ function DefaultErrorFallback({
         alignItems: 'center',
         justifyContent: 'center',
         p: 3,
-        textAlign: 'center',
+        textAlign: 'center'
       }}
     >
       <Card sx={{ maxWidth: 600, width: '100%' }}>
@@ -189,54 +189,54 @@ function DefaultErrorFallback({
             sx={{
               fontSize: 64,
               color: 'error.main',
-              mb: 2,
+              mb: 2
             }}
           />
 
-          <Typography variant="h4" gutterBottom color="error">
+          <Typography variant='h4' gutterBottom color='error'>
             Oops! Something went wrong
           </Typography>
 
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            We encountered an unexpected error while processing your request.
-            This has been logged and our team will investigate.
+          <Typography variant='body1' color='text.secondary' sx={{ mb: 3 }}>
+            We encountered an unexpected error while processing your request. This has
+            been logged and our team will investigate.
           </Typography>
 
-          <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-            <Typography variant="subtitle2">Error Details:</Typography>
-            <Typography variant="body2" component="code">
+          <Alert severity='error' sx={{ mb: 3, textAlign: 'left' }}>
+            <Typography variant='subtitle2'>Error Details:</Typography>
+            <Typography variant='body2' component='code'>
               {error?.message || 'Unknown error occurred'}
             </Typography>
             {errorId && (
-              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              <Typography variant='caption' display='block' sx={{ mt: 1 }}>
                 Error ID: {errorId}
               </Typography>
             )}
           </Alert>
 
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', mb: 3 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              mb: 3
+            }}
+          >
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<RefreshIcon />}
               onClick={resetError}
-              color="primary"
+              color='primary'
             >
               Try Again
             </Button>
 
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={reloadPage}
-            >
+            <Button variant='outlined' startIcon={<RefreshIcon />} onClick={reloadPage}>
               Reload Page
             </Button>
 
-            <Button
-              variant="outlined"
-              startIcon={<HomeIcon />}
-              onClick={goHome}
-            >
+            <Button variant='outlined' startIcon={<HomeIcon />} onClick={goHome}>
               Go Home
             </Button>
           </Box>
@@ -251,21 +251,19 @@ function DefaultErrorFallback({
               >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <BugReportIcon sx={{ mr: 1 }} />
-                  <Typography variant="subtitle2">
-                    Developer Details
-                  </Typography>
+                  <Typography variant='subtitle2'>Developer Details</Typography>
                 </Box>
               </AccordionSummary>
               <AccordionDetails>
                 <Box sx={{ textAlign: 'left' }}>
                   {error && (
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="error">
+                      <Typography variant='subtitle2' color='error'>
                         Error Stack:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="pre"
+                        variant='body2'
+                        component='pre'
                         sx={{
                           fontSize: '0.75rem',
                           fontFamily: 'monospace',
@@ -274,7 +272,7 @@ function DefaultErrorFallback({
                           maxHeight: 200,
                           bgcolor: 'grey.100',
                           p: 1,
-                          borderRadius: 1,
+                          borderRadius: 1
                         }}
                       >
                         {error.stack}
@@ -284,12 +282,12 @@ function DefaultErrorFallback({
 
                   {errorInfo && (
                     <Box>
-                      <Typography variant="subtitle2" color="error">
+                      <Typography variant='subtitle2' color='error'>
                         Component Stack:
                       </Typography>
                       <Typography
-                        variant="body2"
-                        component="pre"
+                        variant='body2'
+                        component='pre'
                         sx={{
                           fontSize: '0.75rem',
                           fontFamily: 'monospace',
@@ -298,7 +296,7 @@ function DefaultErrorFallback({
                           maxHeight: 200,
                           bgcolor: 'grey.100',
                           p: 1,
-                          borderRadius: 1,
+                          borderRadius: 1
                         }}
                       >
                         {errorInfo.componentStack}
@@ -310,23 +308,23 @@ function DefaultErrorFallback({
             </Accordion>
           )}
 
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+          <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
             If this problem persists, please{' '}
             <Button
-              variant="text"
-              size="small"
+              variant='text'
+              size='small'
               onClick={() => {
-                window.open('https://github.com/your-repo/issues/new', '_blank');
+                window.open('https://github.com/your-repo/issues/new', '_blank')
               }}
             >
               report an issue
-            </Button>
-            {' '}with the error ID above.
+            </Button>{' '}
+            with the error ID above.
           </Typography>
         </CardContent>
       </Card>
     </Box>
-  );
+  )
 }
 
 // Specialized error boundaries for different sections
@@ -336,32 +334,32 @@ export function APIErrorBoundary({ children }: { children: React.ReactNode }) {
     <ErrorBoundary
       fallback={({ error, resetError, errorId }) => (
         <Alert
-          severity="error"
+          severity='error'
           action={
-            <Button color="inherit" size="small" onClick={resetError}>
+            <Button color='inherit' size='small' onClick={resetError}>
               Retry
             </Button>
           }
         >
-          <Typography variant="subtitle2">API Error</Typography>
-          <Typography variant="body2">
+          <Typography variant='subtitle2'>API Error</Typography>
+          <Typography variant='body2'>
             {error?.message || 'Failed to load data. Please try again.'}
           </Typography>
           {errorId && (
-            <Typography variant="caption" display="block">
+            <Typography variant='caption' display='block'>
               Error ID: {errorId}
             </Typography>
           )}
         </Alert>
       )}
       onError={(error, errorInfo) => {
-        console.error('API Error:', error, errorInfo);
+        console.error('API Error:', error, errorInfo)
         // Log API errors specifically
       }}
     >
       {children}
     </ErrorBoundary>
-  );
+  )
 }
 
 export function FormErrorBoundary({ children }: { children: React.ReactNode }) {
@@ -369,24 +367,24 @@ export function FormErrorBoundary({ children }: { children: React.ReactNode }) {
     <ErrorBoundary
       fallback={({ error, resetError }) => (
         <Card sx={{ p: 2, border: 1, borderColor: 'error.main' }}>
-          <Typography variant="h6" color="error" gutterBottom>
+          <Typography variant='h6' color='error' gutterBottom>
             Form Error
           </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
+          <Typography variant='body2' sx={{ mb: 2 }}>
             There was an error with the form. Please refresh and try again.
           </Typography>
-          <Button variant="outlined" color="error" onClick={resetError}>
+          <Button variant='outlined' color='error' onClick={resetError}>
             Reset Form
           </Button>
         </Card>
       )}
       onError={(error, errorInfo) => {
-        console.error('Form Error:', error, errorInfo);
+        console.error('Form Error:', error, errorInfo)
       }}
     >
       {children}
     </ErrorBoundary>
-  );
+  )
 }
 
 export function DashboardErrorBoundary({ children }: { children: React.ReactNode }) {
@@ -395,22 +393,22 @@ export function DashboardErrorBoundary({ children }: { children: React.ReactNode
       fallback={({ error, resetError }) => (
         <Box sx={{ textAlign: 'center', p: 4 }}>
           <ErrorIcon sx={{ fontSize: 48, color: 'error.main', mb: 2 }} />
-          <Typography variant="h6" gutterBottom>
+          <Typography variant='h6' gutterBottom>
             Dashboard Unavailable
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
             Unable to load dashboard data. This might be a temporary issue.
           </Typography>
-          <Button variant="contained" onClick={resetError} startIcon={<RefreshIcon />}>
+          <Button variant='contained' onClick={resetError} startIcon={<RefreshIcon />}>
             Reload Dashboard
           </Button>
         </Box>
       )}
       onError={(error, errorInfo) => {
-        console.error('Dashboard Error:', error, errorInfo);
+        console.error('Dashboard Error:', error, errorInfo)
       }}
     >
       {children}
     </ErrorBoundary>
-  );
+  )
 }

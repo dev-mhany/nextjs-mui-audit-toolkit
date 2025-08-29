@@ -45,29 +45,33 @@ For comprehensive documentation, see the `/docs` directory:
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - GitHub account with Personal Access Token
 - Git
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <your-repo-url>
    cd nextjs-mui-audit-toolkit/webapp
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Configure environment**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Edit `.env.local` with your configuration:
+
    ```env
    GITHUB_TOKEN=ghp_your_github_token_here
    GITHUB_WEBHOOK_SECRET=your_secure_webhook_secret
@@ -78,6 +82,7 @@ For comprehensive documentation, see the `/docs` directory:
    ```
 
 4. **Run development server**
+
    ```bash
    npm run dev
    ```
@@ -97,6 +102,7 @@ For comprehensive documentation, see the `/docs` directory:
 ### Email Configuration
 
 #### Gmail (Recommended for testing)
+
 ```env
 EMAIL_PROVIDER=smtp
 EMAIL_HOST=smtp.gmail.com
@@ -107,13 +113,16 @@ EMAIL_PASS=your-app-password  # Use App Password, not regular password
 ```
 
 #### SendGrid
+
 ```env
 EMAIL_PROVIDER=sendgrid
 EMAIL_API_KEY=SG.your-sendgrid-api-key
 ```
 
 ### Webhook Security
+
 Generate a secure webhook secret:
+
 ```bash
 # Generate random secret
 openssl rand -hex 32
@@ -172,12 +181,12 @@ openssl rand -hex 32
 
 ### Core Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/audit/trigger` | POST | Start new audit |
-| `/api/audit/[id]` | GET | Get audit status |
-| `/api/audit/webhook` | POST | GitHub webhook callback |
-| `/api/email/test` | POST | Test email configuration |
+| Endpoint             | Method | Description              |
+| -------------------- | ------ | ------------------------ |
+| `/api/audit/trigger` | POST   | Start new audit          |
+| `/api/audit/[id]`    | GET    | Get audit status         |
+| `/api/audit/webhook` | POST   | GitHub webhook callback  |
+| `/api/email/test`    | POST   | Test email configuration |
 
 ### Example API Usage
 
@@ -196,22 +205,23 @@ const response = await fetch('/api/audit/trigger', {
       minScore: 80
     }
   })
-});
+})
 
-const result = await response.json();
-console.log('Audit ID:', result.auditId);
+const result = await response.json()
+console.log('Audit ID:', result.auditId)
 ```
 
 ```javascript
 // Check audit status
-const status = await fetch(`/api/audit/${auditId}`);
-const audit = await status.json();
-console.log('Progress:', audit.progress.percentage + '%');
+const status = await fetch(`/api/audit/${auditId}`)
+const audit = await status.json()
+console.log('Progress:', audit.progress.percentage + '%')
 ```
 
 ## 🧪 Testing
 
 ### Run Tests
+
 ```bash
 # Unit tests
 npm test
@@ -227,6 +237,7 @@ npm run lint
 ```
 
 ### Test Email Configuration
+
 ```bash
 curl -X POST http://localhost:3000/api/email/test \
   -H "Content-Type: application/json" \
@@ -266,6 +277,7 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment instructions.
 ### Quick Deploy to Vercel
 
 1. **Push to GitHub**
+
    ```bash
    git add .
    git commit -m "Deploy to Vercel"
@@ -281,21 +293,23 @@ See [DEPLOYMENT.md](../DEPLOYMENT.md) for comprehensive deployment instructions.
 3. **Configure Environment Variables**
    In Vercel dashboard, add:
    - `GITHUB_TOKEN`
-   - `GITHUB_WEBHOOK_SECRET` 
+   - `GITHUB_WEBHOOK_SECRET`
    - Email configuration variables
 
 ## 🔍 Monitoring
 
 ### Health Checks
+
 ```bash
 # Application health
 curl https://your-app.vercel.app/api/health
 
-# Email service status  
+# Email service status
 curl https://your-app.vercel.app/api/email/test
 ```
 
 ### Performance Monitoring
+
 - Response times tracked automatically
 - Error rates logged
 - Audit completion metrics
@@ -348,4 +362,4 @@ This project is licensed under the MIT License - see the [LICENSE](../LICENSE) f
 
 **Built with ❤️ by dev-mhany**
 
-*Automated auditing for Next.js + Material-UI projects*
+_Automated auditing for Next.js + Material-UI projects_

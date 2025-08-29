@@ -45,7 +45,7 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          
+
       - name: Trigger remote repository audit
         uses: peter-evans/repository-dispatch@v3
         with:
@@ -60,7 +60,7 @@ jobs:
               "triggered_by": "${{ github.repository }}",
               "run_id": "${{ github.run_id }}"
             }
-            
+
       - name: Log dispatch success
         run: |
           echo "✅ Audit dispatch sent to ${{ inputs.target_repo }}"

@@ -30,7 +30,7 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.WEBAPP_DIR }}
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -76,7 +76,7 @@ jobs:
     defaults:
       run:
         working-directory: ${{ env.WEBAPP_DIR }}
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
     needs: [quality-checks, security-scan]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -148,7 +148,7 @@ jobs:
         with:
           script: |
             const deploymentUrl = process.env.VERCEL_URL || 'Deployment in progress...';
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -180,7 +180,7 @@ jobs:
     needs: [deploy]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -212,7 +212,7 @@ jobs:
     needs: [deploy, performance-test]
     runs-on: ubuntu-latest
     if: always() && (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    
+
     steps:
       - name: 🔔 Notify deployment status
         uses: actions/github-script@v7
@@ -220,13 +220,13 @@ jobs:
           script: |
             const deploymentStatus = '${{ needs.deploy.result }}';
             const performanceStatus = '${{ needs.performance-test.result }}';
-            
+
             const emoji = deploymentStatus === 'success' ? '✅' : '❌';
             const status = deploymentStatus === 'success' ? 'SUCCESS' : 'FAILED';
-            
+
             console.log(`${emoji} Deployment ${status}`);
             console.log(`📊 Performance Test: ${performanceStatus}`);
-            
+
             // Here you could add Slack/Discord/email notifications
             // Example:
             // await fetch(process.env.SLACK_WEBHOOK_URL, {
@@ -244,7 +244,7 @@ jobs:
     needs: [deploy]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: 🧹 Clean up artifacts
         uses: actions/github-script@v7
@@ -256,14 +256,14 @@ jobs:
               repo: context.repo.repo,
               per_page: 100
             });
-            
+
             const oldArtifacts = artifacts.data.artifacts
               .filter(artifact => {
                 const age = Date.now() - new Date(artifact.created_at).getTime();
                 return age > 7 * 24 * 60 * 60 * 1000; // 7 days
               })
               .slice(0, 10); // Only delete 10 at a time
-            
+
             for (const artifact of oldArtifacts) {
               try {
                 await github.rest.actions.deleteArtifact({

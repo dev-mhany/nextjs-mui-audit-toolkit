@@ -1,6 +1,6 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   Box,
   List,
@@ -16,8 +16,8 @@ import {
   DialogActions,
   LinearProgress,
   IconButton,
-  Tooltip,
-} from '@mui/material';
+  Tooltip
+} from '@mui/material'
 import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
@@ -25,17 +25,17 @@ import {
   PlayArrow as PlayArrowIcon,
   Visibility as VisibilityIcon,
   Launch as LaunchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
-import useSWR from 'swr';
-import type { AuditResult } from '@/types/audit';
+  Refresh as RefreshIcon
+} from '@mui/icons-material'
+import useSWR from 'swr'
+import type { AuditResult } from '@/types/audit'
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 interface AuditProgressDialogProps {
-  open: boolean;
-  onClose: () => void;
-  auditId: string;
+  open: boolean
+  onClose: () => void
+  auditId: string
 }
 
 function AuditProgressDialog({ open, onClose, auditId }: AuditProgressDialogProps) {
@@ -43,36 +43,36 @@ function AuditProgressDialog({ open, onClose, auditId }: AuditProgressDialogProp
     open ? `/api/audit/progress/${auditId}` : null,
     fetcher,
     { refreshInterval: 2000 }
-  );
+  )
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth='sm' fullWidth>
       <DialogTitle>Audit Progress</DialogTitle>
       <DialogContent>
         {isLoading ? (
           <Box sx={{ py: 2 }}>
             <LinearProgress />
-            <Typography variant="body2" sx={{ mt: 1 }}>
+            <Typography variant='body2' sx={{ mt: 1 }}>
               Loading progress...
             </Typography>
           </Box>
         ) : progress ? (
           <Box>
-            <Typography variant="body1" gutterBottom>
+            <Typography variant='body1' gutterBottom>
               Current Step: {progress.step}
             </Typography>
-            <LinearProgress 
-              variant="determinate" 
-              value={progress.percentage} 
+            <LinearProgress
+              variant='determinate'
+              value={progress.percentage}
               sx={{ mb: 2 }}
             />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {progress.percentage}% Complete
             </Typography>
-            
+
             {progress.logs && progress.logs.length > 0 && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography variant='subtitle2' gutterBottom>
                   Recent Logs:
                 </Typography>
                 <Box
@@ -83,11 +83,11 @@ function AuditProgressDialog({ open, onClose, auditId }: AuditProgressDialogProp
                     p: 1,
                     borderRadius: 1,
                     fontFamily: 'monospace',
-                    fontSize: '0.875rem',
+                    fontSize: '0.875rem'
                   }}
                 >
                   {progress.logs.slice(-10).map((log: string, index: number) => (
-                    <Typography key={index} variant="body2" component="div">
+                    <Typography key={index} variant='body2' component='div'>
                       {log}
                     </Typography>
                   ))}
@@ -103,116 +103,123 @@ function AuditProgressDialog({ open, onClose, auditId }: AuditProgressDialogProp
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
     </Dialog>
-  );
+  )
 }
 
 function getStatusIcon(status: string) {
   switch (status) {
     case 'completed':
-      return <CheckCircleIcon color="success" />;
+      return <CheckCircleIcon color='success' />
     case 'failed':
-      return <ErrorIcon color="error" />;
+      return <ErrorIcon color='error' />
     case 'running':
-      return <PlayArrowIcon color="primary" />;
+      return <PlayArrowIcon color='primary' />
     default:
-      return <ScheduleIcon color="disabled" />;
+      return <ScheduleIcon color='disabled' />
   }
 }
 
 function getStatusColor(status: string): 'success' | 'error' | 'primary' | 'default' {
   switch (status) {
     case 'completed':
-      return 'success';
+      return 'success'
     case 'failed':
-      return 'error';
+      return 'error'
     case 'running':
-      return 'primary';
+      return 'primary'
     default:
-      return 'default';
+      return 'default'
   }
 }
 
 function getGradeColor(score: number): 'success' | 'warning' | 'error' {
-  if (score >= 85) return 'success';
-  if (score >= 70) return 'warning';
-  return 'error';
+  if (score >= 85) return 'success'
+  if (score >= 70) return 'warning'
+  return 'error'
 }
 
 export function AuditHistory() {
-  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null);
-  const [progressDialogOpen, setProgressDialogOpen] = useState(false);
+  const [selectedAuditId, setSelectedAuditId] = useState<string | null>(null)
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false)
 
-  const { 
-    data: audits, 
-    isLoading, 
+  const {
+    data: audits,
+    isLoading,
     error,
-    mutate 
+    mutate
   } = useSWR<AuditResult[]>('/api/audit/history', fetcher, {
     refreshInterval: 10000, // Refresh every 10 seconds
-    fallbackData: [],
-  });
+    fallbackData: []
+  })
 
   const handleShowProgress = (auditId: string) => {
-    setSelectedAuditId(auditId);
-    setProgressDialogOpen(true);
-  };
+    setSelectedAuditId(auditId)
+    setProgressDialogOpen(true)
+  }
 
   const handleRefresh = () => {
-    mutate();
-  };
+    mutate()
+  }
 
   if (error) {
     return (
       <Box sx={{ textAlign: 'center', py: 3 }}>
-        <Typography variant="h6" color="error" gutterBottom>
+        <Typography variant='h6' color='error' gutterBottom>
           Failed to load audit history
         </Typography>
         <Button onClick={handleRefresh} startIcon={<RefreshIcon />}>
           Retry
         </Button>
       </Box>
-    );
+    )
   }
 
   if (isLoading) {
     return (
       <Box sx={{ py: 2 }}>
         <LinearProgress />
-        <Typography variant="body2" sx={{ mt: 1 }}>
+        <Typography variant='body2' sx={{ mt: 1 }}>
           Loading audit history...
         </Typography>
       </Box>
-    );
+    )
   }
 
   if (!audits || audits.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography variant="h6" color="text.secondary" gutterBottom>
+        <Typography variant='h6' color='text.secondary' gutterBottom>
           No audits yet
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant='body2' color='text.secondary'>
           Start your first audit using the form on the left
         </Typography>
       </Box>
-    );
+    )
   }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="subtitle2" color="text.secondary">
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2
+        }}
+      >
+        <Typography variant='subtitle2' color='text.secondary'>
           {audits.length} audit{audits.length !== 1 ? 's' : ''} found
         </Typography>
-        <IconButton onClick={handleRefresh} size="small">
+        <IconButton onClick={handleRefresh} size='small'>
           <RefreshIcon />
         </IconButton>
       </Box>
 
       <List disablePadding>
-        {audits.slice(0, 10).map((audit) => {
-          const repoName = audit.repoUrl.split('/').slice(-2).join('/');
-          const timeAgo = new Date(audit.createdAt).toLocaleDateString();
+        {audits.slice(0, 10).map(audit => {
+          const repoName = audit.repoUrl.split('/').slice(-2).join('/')
+          const timeAgo = new Date(audit.createdAt).toLocaleDateString()
 
           return (
             <ListItem
@@ -222,47 +229,45 @@ export function AuditHistory() {
                 borderColor: 'divider',
                 borderRadius: 1,
                 mb: 1,
-                bgcolor: 'background.paper',
+                bgcolor: 'background.paper'
               }}
             >
-              <ListItemIcon>
-                {getStatusIcon(audit.status)}
-              </ListItemIcon>
+              <ListItemIcon>{getStatusIcon(audit.status)}</ListItemIcon>
 
               <ListItemText
                 primary={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="subtitle2" noWrap sx={{ maxWidth: 200 }}>
+                    <Typography variant='subtitle2' noWrap sx={{ maxWidth: 200 }}>
                       {repoName}
                     </Typography>
                     <Chip
                       label={audit.status}
-                      size="small"
+                      size='small'
                       color={getStatusColor(audit.status)}
                       variant={audit.status === 'completed' ? 'filled' : 'outlined'}
                     />
                     {audit.score !== undefined && (
                       <Chip
                         label={`${audit.score}/100`}
-                        size="small"
+                        size='small'
                         color={getGradeColor(audit.score)}
-                        variant="outlined"
+                        variant='outlined'
                       />
                     )}
                   </Box>
                 }
                 secondary={
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant='caption' color='text.secondary'>
                       {timeAgo} • Branch: {audit.branch || 'main'}
                     </Typography>
-                    
+
                     {audit.status === 'running' && (
                       <LinearProgress sx={{ height: 3, borderRadius: 1 }} />
                     )}
-                    
+
                     {audit.error && (
-                      <Typography variant="caption" color="error">
+                      <Typography variant='caption' color='error'>
                         Error: {audit.error}
                       </Typography>
                     )}
@@ -272,52 +277,49 @@ export function AuditHistory() {
 
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 {audit.status === 'running' && (
-                  <Tooltip title="View Progress">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleShowProgress(audit.id)}
-                    >
-                      <VisibilityIcon fontSize="small" />
+                  <Tooltip title='View Progress'>
+                    <IconButton size='small' onClick={() => handleShowProgress(audit.id)}>
+                      <VisibilityIcon fontSize='small' />
                     </IconButton>
                   </Tooltip>
                 )}
 
                 {audit.reportUrl && (
-                  <Tooltip title="View Report">
+                  <Tooltip title='View Report'>
                     <IconButton
-                      size="small"
-                      component="a"
+                      size='small'
+                      component='a'
                       href={audit.reportUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target='_blank'
+                      rel='noopener noreferrer'
                     >
-                      <LaunchIcon fontSize="small" />
+                      <LaunchIcon fontSize='small' />
                     </IconButton>
                   </Tooltip>
                 )}
 
                 {audit.workflowRunId && (
-                  <Tooltip title="View GitHub Action">
+                  <Tooltip title='View GitHub Action'>
                     <IconButton
-                      size="small"
-                      component="a"
+                      size='small'
+                      component='a'
                       href={`https://github.com/${repoName}/actions/runs/${audit.workflowRunId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target='_blank'
+                      rel='noopener noreferrer'
                     >
-                      <LaunchIcon fontSize="small" />
+                      <LaunchIcon fontSize='small' />
                     </IconButton>
                   </Tooltip>
                 )}
               </Box>
             </ListItem>
-          );
+          )
         })}
       </List>
 
       {audits.length > 10 && (
         <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button variant="outlined" size="small">
+          <Button variant='outlined' size='small'>
             View All Audits
           </Button>
         </Box>
@@ -331,5 +333,5 @@ export function AuditHistory() {
         />
       )}
     </Box>
-  );
+  )
 }
