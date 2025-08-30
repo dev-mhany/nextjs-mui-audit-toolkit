@@ -350,8 +350,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **🐛 Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+- **🐛 Issues**: [GitHub Issues](https://github.com/nextjs-mui-audit-toolkit/issues)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/nextjs-mui-audit-toolkit/discussions)
 - **📧 Email**: support@your-domain.com
 - **📚 Documentation**: See individual README files
 
